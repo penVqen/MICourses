@@ -59,7 +59,7 @@ h1:focus {
 
     .navbar-buttons .catalog-button {
         position: absolute;
-        left: 300px;
+        left: 250px;
     }
 
     .navbar-buttons .login-button {
@@ -82,7 +82,3 @@ h1:focus {
             background-color: rgba(0, 0, 0, 0.1);
             color: #000000;
         }
-
-
-
-
