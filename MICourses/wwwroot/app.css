@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Krona+One&family=Roboto:wght@400&display=swap');
+
 h1:focus {
     outline: none;
 }
@@ -27,3 +29,60 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.navbar {
+    background-color: #EEE9F6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.navbar-brand .brand-text {
+    font-family: 'Krona One', sans-serif;
+    font-size: 32px;
+    color: black;
+    margin-left: 100px;
+}
+
+.navbar-buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+    align-items: center;
+}
+
+    .navbar-buttons .catalog-button {
+        position: absolute;
+        left: 300px;
+    }
+
+    .navbar-buttons .login-button {
+        position: absolute;
+        right: 400px;
+    }
+
+    .navbar-buttons button {
+        font-family: 'Roboto', sans-serif;
+        font-size: 16px;
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        background-color: #ffffff;
+        color: black;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+        .navbar-buttons button:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #000000;
+        }
+
+
+
+
