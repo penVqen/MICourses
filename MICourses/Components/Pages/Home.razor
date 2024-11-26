@@ -1,5 +1,9 @@
 ﻿@page "/"
 @using MICourses.Components.Layout
+@using MICourses.Models
+@using MICourses.Services
+
+@inject CourseService CourseService
 
 <PageTitle>MI - Образовательный портал</PageTitle>
 
@@ -35,6 +39,31 @@
     </div>
 </div>
 
-<div style="background-color: #EEE9F6; width: 100%; height: 1000px; margin-top: 150px;"></div>
+<div style="background-color: #EEE9F6; width: 100%; padding-top: 110px; padding-bottom: 150px; margin-top: 110px;">
+    <div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 0;">
+        <div class="grid grid-cols-3 gap-6 mt-12" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            @if (courses != null && courses.Any())
+            {
+                @foreach (var course in courses)
+                {
+                    <CourseCard Course="course" />
+                }
+            }
+            else
+            {
+                <p style="font-family: Arial, sans-serif;">Загрузка курсов...</p>
+            }
+        </div>
+    </div>
+</div>
 
 <Footer />
+
+@code {
+    private List<Course> courses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await CourseService.GetCoursesAsync();
+    }
+}
