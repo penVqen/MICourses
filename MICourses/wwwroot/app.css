@@ -30,6 +30,7 @@ h1:focus {
     border-color: #929292;
 }
 
+
 .navbar {
     background-color: #EEE9F6;
     display: flex;
@@ -82,3 +83,24 @@ h1:focus {
             background-color: rgba(0, 0, 0, 0.1);
             color: #000000;
         }
+
+.footer {
+    background-color: white;
+    width: auto;
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+    .footer img {
+        max-width: 50%;
+        max-height: 40%;
+    }
+
+    .footer.visible {
+        opacity: 1;
+    }
+
