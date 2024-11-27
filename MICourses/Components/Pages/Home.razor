@@ -15,25 +15,25 @@
     <div class="mt-20"></div>
 
     <div class="grid grid-cols-5 gap-6 mt-12" style="width: 100%; max-width: 100%; margin: 0 auto;">
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">Все</button>
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">Java</button>
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">C++</button>
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">C#</button>
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">SQL</button>
-    </div>
-
-    <div class="mt-8"></div>
-
-    <div class="grid grid-cols-5 gap-6 mt-8" style="width: 100%; max-width: 100%; margin: 0 auto;">
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">Python</button>
-        <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition" style="font-family: Arial, sans-serif; width: 100%;">Ruby</button>
+        @foreach (var filter in directionFilters)
+        {
+            <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition"
+                    style="font-family: Arial, sans-serif; width: 100%;">
+                @filter
+            </button>
+        }
     </div>
 
     <div class="mt-20"></div>
 
     <div class="flex space-x-4 justify-start mt-6" style="margin-left: 0;">
-        <button class="py-2 px-6 text-black border border-black bg-white hover:bg-gray-100 transition text-sm" style="font-family: Arial, sans-serif;">Все</button>
-        <button class="py-2 px-6 text-black border border-black bg-white hover:bg-gray-100 transition text-sm" style="font-family: Arial, sans-serif;">Для начинающих</button>
+        @foreach (var filter in additionalFilters)
+        {
+            <button class="py-2 px-6 text-black border border-black bg-white hover:bg-gray-100 transition text-sm"
+                    style="font-family: Arial, sans-serif;">
+                @filter
+            </button>
+        }
     </div>
 </div>
 
@@ -57,6 +57,10 @@
 
 @code {
     private List<Course> courses;
+
+    private readonly List<string> directionFilters = new() { "Все", "Java", "C++", "C#", "SQL", "Python", "Ruby" };
+
+    private readonly List<string> additionalFilters = new() { "Все", "Для начинающих" };
 
     protected override async Task OnInitializedAsync()
     {
