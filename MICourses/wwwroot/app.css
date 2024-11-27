@@ -54,21 +54,19 @@ h1:focus {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    position: relative;
     align-items: center;
+    position: relative;
 }
 
     .navbar-buttons .catalog-button {
-        position: absolute;
-        left: 250px;
+        margin-left: 250px;
     }
 
     .navbar-buttons .login-button {
-        position: absolute;
-        right: 400px;
+        margin-right: 400px;
     }
 
-    .navbar-buttons button {
+    .navbar-buttons a {
         font-family: 'Roboto', sans-serif;
         font-size: 16px;
         padding: 8px 16px;
@@ -76,10 +74,12 @@ h1:focus {
         background-color: #ffffff;
         color: black;
         cursor: pointer;
+        text-decoration: none;
         transition: background-color 0.2s ease, color 0.2s ease;
+        display: inline-block;
     }
 
-        .navbar-buttons button:hover {
+        .navbar-buttons a:hover {
             background-color: rgba(0, 0, 0, 0.1);
             color: #000000;
         }
