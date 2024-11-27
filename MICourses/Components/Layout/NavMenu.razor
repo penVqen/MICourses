@@ -1,9 +1,4 @@
-﻿@using MICourses.Components.Modal
-@using MICourses.Services
-
-@inject ModalService ModalService
-
-<link href="css/app.css" rel="stylesheet">
+﻿<link href="css/app.css" rel="stylesheet">
 
 <nav class="navbar">
     <div class="navbar-brand">
@@ -11,17 +6,6 @@
     </div>
     <div class="navbar-buttons">
         <button class="catalog-button">Каталог</button>
-        <button class="login-button" @onclick="NotifyLoginButtonClick">Войти</button>
+        <button class="login-button">Войти</button>
     </div>
 </nav>
-
-@code {
-    [Parameter] public EventCallback OnLoginButtonClick { get; set; }
-
-    private async Task NotifyLoginButtonClick()
-    {
-        await OnLoginButtonClick.InvokeAsync(); // Уведомляем родительский компонент
-    }
-}
-
-
