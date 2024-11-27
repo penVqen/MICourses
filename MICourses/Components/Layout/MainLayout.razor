@@ -1,25 +1,9 @@
-﻿@using MICourses.Components.Modal
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 
-<NavMenu OnLoginButtonClick="HandleLoginModalOpen" />
+@Body
 
-<LoginModal Visible="@isLoginModalVisible" OnClose="HandleLoginModalClose" />
-
-<main>
-    @Body
-</main>
-
-@code {
-    private bool isLoginModalVisible = false;
-
-    private void HandleLoginModalOpen()
-    {
-        isLoginModalVisible = true;
-    }
-
-    private async Task HandleLoginModalClose(bool isVisible)
-    {
-        isLoginModalVisible = isVisible;
-        await Task.CompletedTask;
-    }
-}
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
