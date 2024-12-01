@@ -30,6 +30,7 @@ h1:focus {
     border-color: #929292;
 }
 
+/* Шапка */
 
 .navbar {
     background-color: #EEE9F6;
@@ -38,51 +39,121 @@ h1:focus {
     align-items: center;
     padding: 10px 20px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    margin: 0;
     width: 100%;
     box-sizing: border-box;
 }
 
-.navbar-brand .brand-text {
-    font-family: 'Krona One', sans-serif;
-    font-size: 32px;
-    color: black;
-    margin-left: 100px;
+.navbar-brand {
+    width: 400px;
+    display: flex;
+    justify-content: center;
+    margin-right: auto;
 }
+
+    .navbar-brand .brand-text {
+        font-family: 'Krona One', sans-serif;
+        font-size: 32px;
+        color: black;
+    }
 
 .navbar-buttons {
     display: flex;
     justify-content: space-between;
-    width: 100%;
+    flex-grow: 1;
+}
+
+.catalog-button,
+.training-button,
+.login-button {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    padding: 12px 20px;
+    text-align: center;
+    border: 1px solid black;
+    background-color: white;
+    color: black;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+}
+
+    .catalog-button:hover,
+    .training-button:hover,
+    .login-button:hover {
+        background-color: #f0f0f0;
+    }
+
+.login-text {
+    font-size: 16px;
+    color: #000;
+    margin-right: 12px;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Бургер-Меню */
+
+.dropdown {
+    width: 400px;
+    display: flex;
+    justify-content: center;
     align-items: center;
     position: relative;
 }
 
-    .navbar-buttons .catalog-button {
-        margin-left: 250px;
+.dropdown-arrow {
+    font-size: 16px;
+    color: #000;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    transform: rotate(90deg);
+}
+
+.dropdown.active .dropdown-arrow {
+    transform: rotate(0deg);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #D4C7EA;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 10px 0;
+    width: 200px;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+.dropdown.active .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu a {
+    display: block;
+    font-size: 16px;
+    font-weight: bold;
+    color: black;
+    padding: 10px 15px;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+    .dropdown-menu a:hover {
+        background-color: #E3DCED;
+        color: white;
     }
 
-    .navbar-buttons .login-button {
-        margin-right: 400px;
+    .dropdown-menu a:not(:last-child) {
+        border-bottom: 1px solid #d3cce3;
     }
 
-    .navbar-buttons a {
-        font-family: 'Roboto', sans-serif;
-        font-size: 16px;
-        padding: 8px 16px;
-        border: 1px solid rgba(0, 0, 0, 0.5);
-        background-color: #ffffff;
-        color: black;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background-color 0.2s ease, color 0.2s ease;
-        display: inline-block;
-    }
 
-        .navbar-buttons a:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-            color: #000000;
-        }
+/* Подвал */
 
 .footer {
     background-color: white;
@@ -103,4 +174,3 @@ h1:focus {
     .footer.visible {
         opacity: 1;
     }
-
