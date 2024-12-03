@@ -1,0 +1,16 @@
+﻿<link href="css/site.css" rel="stylesheet">
+
+<footer class="footer">
+    <img src="/Images/Logo.jpg" alt="Логотип">
+</footer>
+
+<script>
+    document.addEventListener('scroll', function () {
+        var footer = document.querySelector('.footer');
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 10) {
+            footer.classList.add('visible');
+        } else {
+            footer.classList.remove('visible');
+        }
+    });
+</script>
