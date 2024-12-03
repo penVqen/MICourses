@@ -20,17 +20,45 @@ namespace MICourses.Services
         /// <returns>True, если пользователь авторизован, иначе false.</returns>
         public async Task<bool> AuthenticateUserAsync(string loginOrEmail, string password)
         {
-            // Ищем пользователя по логину или email
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Login == loginOrEmail || u.Email == loginOrEmail);
 
-            // Проверяем, найден ли пользователь и совпадает ли пароль
             if (user != null && user.Password == password)
             {
-                return true; // Пользователь успешно авторизован
+                return true;
             }
 
-            return false; // Неверный логин/пароль
+            return false;
+        }
+
+        /// <summary>
+        /// Проверяет существование пользователя по логину или email.
+        /// </summary>
+        /// <param name="loginOrEmail">Логин или Email пользователя</param>
+        /// <returns>True, если пользователь существует, иначе false.</returns>
+        public async Task<bool> CheckUserExistsAsync(string loginOrEmail)
+        {
+            return await _context.Users
+                .AnyAsync(u => u.Login == loginOrEmail || u.Email == loginOrEmail);
+        }
+
+        /// <summary>
+        /// Проверяет правильность пароля для указанного логина или email.
+        /// </summary>
+        /// <param name="loginOrEmail">Логин или Email пользователя</param>
+        /// <param name="password">Пароль пользователя</param>
+        /// <returns>True, если пароль правильный, иначе false.</returns>
+        public async Task<bool> VerifyPasswordAsync(string loginOrEmail, string password)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Login == loginOrEmail || u.Email == loginOrEmail);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            return user.Password == password;
         }
     }
 }
