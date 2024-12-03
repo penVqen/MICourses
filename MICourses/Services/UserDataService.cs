@@ -60,5 +60,17 @@ namespace MICourses.Services
 
             return user.Password == password;
         }
+
+        public async Task<bool> CheckUserExistsAsync(string login, string email)
+        {
+            return await _context.Users.AnyAsync(u => u.Login == login || u.Email == email);
+        }
+
+        public async Task AddUserAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }
