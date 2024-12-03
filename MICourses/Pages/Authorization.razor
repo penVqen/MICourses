@@ -14,11 +14,19 @@
             <div>
                 <input type="text" @bind="LoginOrEmail" placeholder="Логин / Email"
                        class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+                @if (!string.IsNullOrEmpty(LoginErrorMessage))
+                {
+                    <p class="text-red-500 mt-2">@LoginErrorMessage</p>
+                }
             </div>
 
             <div>
                 <input type="password" @bind="Password" placeholder="Пароль"
                        class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+                @if (!string.IsNullOrEmpty(PasswordErrorMessage))
+                {
+                    <p class="text-red-500 mt-2">@PasswordErrorMessage</p>
+                }
             </div>
 
             <div>
@@ -43,23 +51,51 @@
 </div>
 
 @code {
-    private string LoginOrEmail { get; set; }
-    private string Password { get; set; }
+    private string LoginOrEmail { get; set; } = string.Empty;
+    private string Password { get; set; } = string.Empty;
     private string ErrorMessage { get; set; }
+    private string LoginErrorMessage { get; set; }
+    private string PasswordErrorMessage { get; set; }
 
     private async Task HandleLogin()
     {
         ErrorMessage = string.Empty;
+        LoginErrorMessage = string.Empty;
+        PasswordErrorMessage = string.Empty;
 
-        // Проверяем, авторизован ли пользователь
-        var isAuthenticated = await UserDataService.AuthenticateUserAsync(LoginOrEmail, Password);
-        if (isAuthenticated)
+        bool isValid = true;
+
+        if (string.IsNullOrWhiteSpace(LoginOrEmail))
         {
-            NavigationManager.NavigateTo("/profile");
+            LoginErrorMessage = "Поле логин/email не может быть пустым.";
+            isValid = false;
         }
-        else
+
+        if (string.IsNullOrWhiteSpace(Password))
         {
-            ErrorMessage = "Неверный логин/пароль. Попробуйте еще раз.";
+            PasswordErrorMessage = "Поле пароль не может быть пустым.";
+            isValid = false;
         }
+
+        if (!isValid)
+        {
+            return;
+        }
+
+        var userExists = await UserDataService.CheckUserExistsAsync(LoginOrEmail);
+        if (!userExists)
+        {
+            LoginErrorMessage = "Неверный логин/email.";
+            return;
+        }
+
+        var isPasswordCorrect = await UserDataService.VerifyPasswordAsync(LoginOrEmail, Password);
+        if (!isPasswordCorrect)
+        {
+            PasswordErrorMessage = "Неверный пароль.";
+            return;
+        }
+
+        NavigationManager.NavigateTo("/profile");
     }
 }
