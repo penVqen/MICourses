@@ -1,0 +1,69 @@
+﻿@page "/"
+@using MICourses.Layout
+@using MICourses.Models
+@using MICourses.Services
+
+@inject CourseService CourseService
+
+<NavMenu />
+
+<div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px;">
+    <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="text-4xl font-bold" style="font-family: Arial, sans-serif; margin: 0;">Курсы по всем направлениям</h1>
+    </div>
+
+    <div class="mt-20"></div>
+
+    <div class="grid grid-cols-5 gap-6 mt-12" style="width: 100%; max-width: 100%; margin: 0 auto;">
+        @foreach (var filter in directionFilters)
+        {
+            <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition"
+                    style="font-family: Arial, sans-serif; width: 100%;">
+                @filter
+            </button>
+        }
+    </div>
+
+    <div class="mt-20"></div>
+
+    <div class="flex space-x-4 justify-start mt-6" style="margin-left: 0;">
+        @foreach (var filter in additionalFilters)
+        {
+            <button class="py-2 px-6 text-black border border-black bg-white hover:bg-gray-100 transition text-sm"
+                    style="font-family: Arial, sans-serif;">
+                @filter
+            </button>
+        }
+    </div>
+</div>
+
+<div style="background-color: #EEE9F6; width: 100%; padding-top: 110px; padding-bottom: 150px; margin-top: 110px;">
+    <div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 0;">
+        <div class="grid grid-cols-3 gap-6 mt-12" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            @if (courses != null && courses.Any())
+            {
+                @foreach (var course in courses)
+                {
+                    <CourseCard Course="course" />
+                }
+            }
+            else
+            {
+                <p style="font-family: Arial, sans-serif;">Загрузка курсов...</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Course> courses;
+
+    private readonly List<string> directionFilters = new() { "Все", "Java", "C++", "C#", "SQL", "Python", "Ruby" };
+
+    private readonly List<string> additionalFilters = new() { "Все", "Для начинающих" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await CourseService.GetCoursesAsync();
+    }
+}

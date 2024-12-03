@@ -1,0 +1,46 @@
+﻿@page "/registration"
+
+@using MICourses.Layout
+
+<NavMenu />
+
+<div class="flex items-center justify-center h-screen">
+    <div class="bg-white p-16 rounded shadow-md max-w-lg w-full">
+
+        <h2 class="text-center mb-10" style="font-family: Arial; font-size: 2rem; font-weight: normal; white-space: nowrap;">Регистрация</h2>
+
+        <form class="space-y-10">
+            <div>
+                <input type="text" id="username" name="username"
+                       placeholder="Введите логин"
+                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+            </div>
+
+            <div>
+                <input type="email" id="email" name="email"
+                       placeholder="Введите email"
+                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+            </div>
+
+            <div>
+                <input type="password" id="password" name="password"
+                       placeholder="Придумайте пароль"
+                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+                <p class="mt-2 text-sm text-gray-500">Не менее 6 символов</p>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="w-full text-white py-3 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                        style="background-color: rgb(178, 146, 215); font-size: 1.2rem;">
+                    Зарегистрироваться
+                </button>
+            </div>
+        </form>
+
+        <p class="mt-10 text-center text-lg text-gray-600">
+            Уже есть аккаунт?
+            <a href="/authorization" class="text-purple-500 hover:underline">Войти</a>
+        </p>
+    </div>
+</div>
