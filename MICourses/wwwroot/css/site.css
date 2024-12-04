@@ -101,7 +101,7 @@ h1:focus {
 }
 
 .dropdown-arrow {
-    font-size: 16px;
+    font-size: 25px;
     color: #000;
     border: none;
     background: transparent;
@@ -110,7 +110,7 @@ h1:focus {
     transform: rotate(90deg);
 }
 
-.dropdown.active .dropdown-arrow {
+.dropdown:hover .dropdown-arrow {
     transform: rotate(0deg);
 }
 
@@ -128,7 +128,7 @@ h1:focus {
     z-index: 1000;
 }
 
-.dropdown.active .dropdown-menu {
+.dropdown:hover .dropdown-menu {
     display: block;
 }
 
@@ -151,7 +151,6 @@ h1:focus {
     .dropdown-menu a:not(:last-child) {
         border-bottom: 1px solid #d3cce3;
     }
-
 
 /* Подвал */
 
