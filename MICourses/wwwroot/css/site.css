@@ -174,3 +174,7 @@ h1:focus {
     .footer.visible {
         opacity: 1;
     }
+
+.active-filter {
+    background-color: #E5E4E2;
+}

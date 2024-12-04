@@ -17,32 +17,35 @@
     <div class="grid grid-cols-5 gap-6 mt-12" style="width: 100%; max-width: 100%; margin: 0 auto;">
         @foreach (var filter in directionFilters)
         {
-            <button class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition"
+            <button @onclick="() => ApplyLanguageFilter(filter)"
+                    class="py-4 text-black border border-black bg-white hover:bg-gray-100 transition
+                       @(filter == selectedLanguageFilter ? "active-filter" : "")"
                     style="font-family: Arial, sans-serif; width: 100%;">
                 @filter
             </button>
         }
     </div>
 
-    <div class="mt-20"></div>
-
     <div class="flex space-x-4 justify-start mt-6" style="margin-left: 0;">
         @foreach (var filter in additionalFilters)
         {
-            <button class="py-2 px-6 text-black border border-black bg-white hover:bg-gray-100 transition text-sm"
+            <button @onclick="() => ApplyLevelFilter(filter)"
+                    class="py-2 px-6 text-black border border-black bg-white hover:bg-gray-100 transition text-sm
+                       @(filter == selectedLevelFilter ? "active-filter" : "")"
                     style="font-family: Arial, sans-serif;">
                 @filter
             </button>
         }
     </div>
+
 </div>
 
 <div style="background-color: #EEE9F6; width: 100%; padding-top: 110px; padding-bottom: 150px; margin-top: 110px;">
     <div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 0;">
         <div class="grid grid-cols-3 gap-6 mt-12" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-            @if (courses != null && courses.Any())
+            @if (filteredCourses != null && filteredCourses.Any())
             {
-                @foreach (var course in courses)
+                @foreach (var course in filteredCourses)
                 {
                     <CourseCard Course="course" />
                 }
@@ -57,13 +60,55 @@
 
 @code {
     private List<Course> courses;
+    private List<Course> filteredCourses;
+    private string selectedLanguageFilter = "Все";
+    private string selectedLevelFilter = "Все"; 
 
     private readonly List<string> directionFilters = new() { "Все", "Java", "C++", "C#", "SQL", "Python", "Ruby" };
-
-    private readonly List<string> additionalFilters = new() { "Все", "Для начинающих" };
+    private readonly List<string> additionalFilters = new() { "Все", "Для начинающих", "Продвинутый уровень" };
 
     protected override async Task OnInitializedAsync()
     {
         courses = await CourseService.GetCoursesAsync();
+        filteredCourses = courses;
+    }
+
+    private void ApplyLanguageFilter(string language)
+    {
+        selectedLanguageFilter = language;
+        FilterCourses();
+    }
+
+    private void ApplyLevelFilter(string level)
+    {
+        selectedLevelFilter = level;
+        FilterCourses();
+    }
+
+    private void FilterCourses()
+    {
+        filteredCourses = courses;
+
+        if (selectedLanguageFilter != "Все")
+        {
+            filteredCourses = filteredCourses.Where(c => c.Language.Equals(selectedLanguageFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (selectedLevelFilter == "Для начинающих")
+        {
+            filteredCourses = filteredCourses.Where(c => !c.ForBeginners).ToList();
+        }
+        else if (selectedLevelFilter == "Продвинутый уровень")
+        {
+            filteredCourses = filteredCourses.Where(c => c.ForBeginners).ToList(); 
+        }
+
+        if (selectedLevelFilter == "Все")
+        {
+            if (selectedLanguageFilter != "Все")
+            {
+                filteredCourses = filteredCourses.Where(c => c.Language.Equals(selectedLanguageFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+        }
     }
 }
