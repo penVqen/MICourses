@@ -5,67 +5,97 @@
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
 
-<div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px; min-height: calc(100vh - 100px);">
-    <h1 class="text-4xl font-bold" style="font-family: Arial, sans-serif; margin-bottom: 20px;">Личная информация</h1>
+<div class="container mx-auto max-w-screen-lg mt-12">
+    <h1 class="text-4xl font-bold mb-8">Личная информация</h1>
 
-    <div style="background: white; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); padding: 20px; width: 100%; box-sizing: border-box;">
+    <div class="bg-white rounded-lg shadow-md p-6">
         <form>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                    <label style="font-family: Arial, sans-serif; font-size: 14px;">Фамилия</label>
-                    <input type="text" @bind="EditableUser.Surname" disabled="@IsReadOnly"
-                           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;">
+                    <label class="block text-sm font-medium text-gray-700">Фамилия</label>
+                    <input type="text" @bind="EditableUser.Surname" disabled="@IsReadOnly" @oninput="ValidateSurname"
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    @if (!string.IsNullOrWhiteSpace(SurnameError))
+                    {
+                        <span class="text-red-500 text-xs">@SurnameError</span>
+                    }
                 </div>
                 <div>
-                    <label style="font-family: Arial, sans-serif; font-size: 14px;">Имя</label>
-                    <input type="text" @bind="EditableUser.Name" disabled="@IsReadOnly"
-                           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;">
+                    <label class="block text-sm font-medium text-gray-700">Имя</label>
+                    <input type="text" @bind="EditableUser.Name" disabled="@IsReadOnly" @oninput="ValidateName"
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    @if (!string.IsNullOrWhiteSpace(NameError))
+                    {
+                        <span class="text-red-500 text-xs">@NameError</span>
+                    }
                 </div>
                 <div>
-                    <label style="font-family: Arial, sans-serif; font-size: 14px;">Отчество</label>
-                    <input type="text" @bind="EditableUser.MiddleName" disabled="@IsReadOnly"
-                           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;">
+                    <label class="block text-sm font-medium text-gray-700">Отчество</label>
+                    <input type="text" @bind="EditableUser.MiddleName" disabled="@IsReadOnly" @oninput="ValidateMiddleName"
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    @if (!string.IsNullOrWhiteSpace(MiddleNameError))
+                    {
+                        <span class="text-red-500 text-xs">@MiddleNameError</span>
+                    }
                 </div>
                 <div>
-                    <label style="font-family: Arial, sans-serif; font-size: 14px;">Дата рождения</label>
-                    <input type="date" @bind="EditableUser.Birthday" disabled="@IsReadOnly"
-                           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;">
+                    <label class="block text-sm font-medium text-gray-700">Дата рождения</label>
+                    <input type="date" @bind="EditableUser.Birthday" disabled="@IsReadOnly" @oninput="ValidateBirthday"
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    @if (!string.IsNullOrWhiteSpace(BirthdayError))
+                    {
+                        <span class="text-red-500 text-xs">@BirthdayError</span>
+                    }
                 </div>
                 <div>
-                    <label style="font-family: Arial, sans-serif; font-size: 14px;">Номер телефона</label>
-                    <input type="text" @bind="EditableUser.PhoneNumber" disabled="@IsReadOnly"
-                           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;">
+                    <label class="block text-sm font-medium text-gray-700">Номер телефона</label>
+                    <input type="text" @bind="EditableUser.PhoneNumber" disabled="@IsReadOnly" @oninput="ValidatePhoneNumber"
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    @if (!string.IsNullOrWhiteSpace(PhoneNumberError))
+                    {
+                        <span class="text-red-500 text-xs">@PhoneNumberError</span>
+                    }
                 </div>
                 <div>
-                    <label style="font-family: Arial, sans-serif; font-size: 14px;">Пол</label>
+                    <label class="block text-sm font-medium text-gray-700">Пол</label>
                     <select @bind="EditableUser.Sex" disabled="@IsReadOnly"
-                            style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;">
+                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         <option value="Male">Мужской</option>
                         <option value="Female">Женский</option>
                     </select>
                 </div>
             </div>
 
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <div class="flex gap-4 mt-6">
                 @if (IsReadOnly)
                 {
-                    <button type="button" @onclick="EnableEditing" style="background: #B292D7; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-family: Arial, sans-serif; cursor: pointer;">Редактировать</button>
+                    <button type="button" @onclick="EnableEditing"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        Редактировать
+                    </button>
                 }
                 else
                 {
-                    <button type="button" @onclick="SaveChanges" style="background: #B292D7; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-family: Arial, sans-serif; cursor: pointer;">Сохранить</button>
-                    <button type="button" @onclick="CancelChanges" style="background: #B292D7; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-family: Arial, sans-serif; cursor: pointer;">Отменить изменения</button>
+                    <button type="button" @onclick="SaveChanges"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        Сохранить
+                    </button>
+                    <button type="button" @onclick="CancelChanges"
+                            class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Отменить изменения
+                    </button>
                 }
             </div>
         </form>
     </div>
 
-    <div style="margin: 40px 0;"></div>
-
-    <div style="background: white; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); padding: 20px; width: 100%; box-sizing: border-box;">
-        <h2 style="font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; margin-bottom: 10px;">Удаление профиля</h2>
-        <p style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">После нажатия кнопки 'Удалить профиль' все ваши данные будут безвозвратно удалены. Пожалуйста, будьте уверены в своем решении.</p>
-        <button type="button" @onclick="DeleteProfile" style="background: black; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-family: Arial, sans-serif; cursor: pointer; margin-top: 10px;">Удалить профиль</button>
+    <div class="mt-10 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-bold">Удаление профиля</h2>
+        <p class="text-sm text-gray-600">После нажатия кнопки 'Удалить профиль' все ваши данные будут безвозвратно удалены.</p>
+        <button type="button" @onclick="DeleteProfile"
+                class="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+            Удалить профиль
+        </button>
     </div>
 </div>
 
@@ -73,6 +103,8 @@
     private User EditableUser { get; set; }
     private User OriginalUser { get; set; }
     private bool IsReadOnly { get; set; } = true;
+
+    private string SurnameError, NameError, MiddleNameError, BirthdayError, PhoneNumberError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,7 +135,14 @@
 
     private async Task SaveChanges()
     {
-        IsReadOnly = true;
+        ValidateAll();
+        if (!string.IsNullOrWhiteSpace(SurnameError) ||
+            !string.IsNullOrWhiteSpace(NameError) ||
+            !string.IsNullOrWhiteSpace(BirthdayError) ||
+            !string.IsNullOrWhiteSpace(PhoneNumberError))
+        {
+            return;
+        }
 
         var userToUpdate = await DbContext.Users.FindAsync(EditableUser.ID_User);
         if (userToUpdate != null)
@@ -126,6 +165,8 @@
                     PhoneNumber = userToUpdate.PhoneNumber,
                     Sex = userToUpdate.Sex
                 };
+
+            IsReadOnly = true;
         }
     }
 
@@ -142,6 +183,13 @@
                 PhoneNumber = OriginalUser.PhoneNumber,
                 Sex = OriginalUser.Sex
             };
+
+        SurnameError = null;
+        NameError = null;
+        MiddleNameError = null;
+        BirthdayError = null;
+        PhoneNumberError = null;
+
     }
 
     private async Task DeleteProfile()
@@ -153,6 +201,83 @@
             await DbContext.SaveChangesAsync();
             CurrentUserService.Logout();
             NavigationManager.NavigateTo("/authorization");
+        }
+    }
+
+    private void ValidateAll()
+    {
+        ValidateSurname();
+        ValidateName();
+        ValidateMiddleName();
+        ValidateBirthday();
+        ValidatePhoneNumber();
+    }
+
+    private void ValidateSurname()
+    {
+        if (string.IsNullOrWhiteSpace(EditableUser.Surname) || !char.IsUpper(EditableUser.Surname[0]) || !EditableUser.Surname.All(char.IsLetter))
+        {
+            SurnameError = "Фамилия должна начинаться с заглавной буквы и содержать только буквы.";
+        }
+        else
+        {
+            SurnameError = null;
+        }
+    }
+
+    private void ValidateName()
+    {
+        if (string.IsNullOrWhiteSpace(EditableUser.Name) || EditableUser.Name.Length < 2 || !char.IsUpper(EditableUser.Name[0]) || !EditableUser.Name.All(char.IsLetter))
+        {
+            NameError = "Имя должно начинаться с заглавной буквы, содержать только буквы и быть не менее 2 символов.";
+        }
+        else
+        {
+            NameError = null;
+        }
+    }
+
+    private void ValidateMiddleName()
+    {
+        if (!string.IsNullOrWhiteSpace(EditableUser.MiddleName) && !EditableUser.MiddleName.All(char.IsLetter))
+        {
+            MiddleNameError = "Отчество может быть пустым или содержать только буквы.";
+        }
+        else
+        {
+            MiddleNameError = null;
+        }
+    }
+
+    private void ValidateBirthday()
+    {
+        if (EditableUser.Birthday.HasValue)
+        {
+            var age = DateTime.Now.Year - EditableUser.Birthday.Value.Year;
+            if (age > 122 || EditableUser.Birthday > DateTime.Now)
+            {
+                BirthdayError = "Некорректная дата рождения. Максимальный возраст - 122 года.";
+            }
+            else
+            {
+                BirthdayError = null;
+            }
+        }
+        else
+        {
+            BirthdayError = "Дата рождения обязательна.";
+        }
+    }
+
+    private void ValidatePhoneNumber()
+    {
+        if (string.IsNullOrWhiteSpace(EditableUser.PhoneNumber) || EditableUser.PhoneNumber.Length < 12 || EditableUser.PhoneNumber.Length > 12 || !EditableUser.PhoneNumber.All(c => char.IsDigit(c) || c == '+'))
+        {
+            PhoneNumberError = "Телефон должен содержать не более 12 символов, только цифры и символ '+'.";
+        }
+        else
+        {
+            PhoneNumberError = null;
         }
     }
 }
