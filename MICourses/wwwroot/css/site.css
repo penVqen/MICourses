@@ -101,7 +101,7 @@ h1:focus {
 }
 
 .dropdown-arrow {
-    font-size: 16px;
+    font-size: 25px;
     color: #000;
     border: none;
     background: transparent;
@@ -110,7 +110,7 @@ h1:focus {
     transform: rotate(90deg);
 }
 
-.dropdown.active .dropdown-arrow {
+.dropdown:hover .dropdown-arrow {
     transform: rotate(0deg);
 }
 
@@ -128,7 +128,7 @@ h1:focus {
     z-index: 1000;
 }
 
-.dropdown.active .dropdown-menu {
+.dropdown:hover .dropdown-menu {
     display: block;
 }
 
@@ -152,7 +152,6 @@ h1:focus {
         border-bottom: 1px solid #d3cce3;
     }
 
-
 /* Подвал */
 
 .footer {
@@ -173,4 +172,44 @@ h1:focus {
 
     .footer.visible {
         opacity: 1;
+    }
+
+/* Фильтрация на основной странице */
+
+.active-filter {
+    background-color: #E5E4E2;
+}
+
+/* Меню в обучении */
+
+.custom-button {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px;
+    background-color: #F6F6F6;
+    color: #B292D7;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+    .custom-button:hover {
+        background-color: #E0E0E0;
+    }
+
+.customs-button {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+    .customs-button:hover {
+        background-color: #E0E0E0;
     }

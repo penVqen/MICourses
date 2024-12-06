@@ -12,7 +12,7 @@
 
     <div class="navbar-buttons">
         <a href="/" class="catalog-button">Каталог</a>
-        <a href="/training" class="training-button">Мое обучение</a>
+        <a href="/education" class="training-button">Мое обучение</a>
     </div>
 
     <div class="dropdown">
@@ -32,23 +32,7 @@
     </div>
 </nav>
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const dropdown = document.querySelector(".dropdown");
-        const arrow = dropdown.querySelector(".dropdown-arrow");
-        const menu = dropdown.querySelector(".dropdown-menu");
 
-        dropdown.addEventListener("click", () => {
-            dropdown.classList.toggle("active");
-        });
-
-        document.addEventListener("click", (e) => {
-            if (!dropdown.contains(e.target)) {
-                dropdown.classList.remove("active");
-            }
-        });
-    });
-</script>
 
 @code {
     private void Logout()
@@ -57,3 +41,11 @@
         NavigationManager.NavigateTo("/authorization");
     }
 }
+        <span class="login-text">Login</span>
+        <button class="dropdown-arrow">&#9662;</button>
+        <div class="dropdown-menu">
+            <a href="/profile">Профиль</a>
+            <a href="#">Выход</a>
+        </div>
+    </div>
+</nav>

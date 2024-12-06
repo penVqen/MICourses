@@ -48,4 +48,22 @@ public partial class User
 
     [StringLength(50)]
     public string Sex { get; set; }
+
+    [InverseProperty("ID_UserNavigation")]
+    public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+
+    [InverseProperty("ID_UserNavigation")]
+    public virtual ICollection<Users_Achievment> Users_Achievments { get; set; } = new List<Users_Achievment>();
+
+    [InverseProperty("ID_UserNavigation")]
+    public virtual ICollection<Users_Comment> Users_Comments { get; set; } = new List<Users_Comment>();
+
+    [InverseProperty("ID_UserNavigation")]
+    public virtual ICollection<Users_Course> Users_Courses { get; set; } = new List<Users_Course>();
+
+    [InverseProperty("ID_UserNavigation")]
+    public virtual ICollection<Users_Lesson> Users_Lessons { get; set; } = new List<Users_Lesson>();
+
+    [InverseProperty("ID_UserNavigation")]
+    public virtual ICollection<Users_Test> Users_Tests { get; set; } = new List<Users_Test>();
 }

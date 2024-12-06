@@ -30,4 +30,13 @@ public partial class Course
     public string Language { get; set; }
 
     public bool ForBeginners { get; set; }
+
+    [InverseProperty("ID_CourseNavigation")]
+    public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+
+    [InverseProperty("ID_CourseNavigation")]
+    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+
+    [InverseProperty("ID_CourseNavigation")]
+    public virtual ICollection<Users_Course> Users_Courses { get; set; } = new List<Users_Course>();
 }
