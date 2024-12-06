@@ -1,4 +1,9 @@
-﻿<link href="css/site.css" rel="stylesheet">
+﻿@using MICourses.Services
+@inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
+
+
+<link href="css/site.css" rel="stylesheet">
 
 <nav class="navbar">
     <div class="navbar-brand">
@@ -11,6 +16,31 @@
     </div>
 
     <div class="dropdown">
+        @if (CurrentUserService.IsAuthenticated())
+        {
+            <span class="login-text">@CurrentUserService.GetCurrentUser()?.Login</span>
+            <button class="dropdown-arrow">&#9662;</button>
+            <div class="dropdown-menu">
+                <a href="/profile">Профиль</a>
+                <a @onclick="Logout">Выход</a>
+            </div>
+        }
+        else
+        {
+            <a href="/authorization" class="login-button">Вход</a>
+        }
+    </div>
+</nav>
+
+
+
+@code {
+    private void Logout()
+    {
+        CurrentUserService.Logout();
+        NavigationManager.NavigateTo("/authorization");
+    }
+}
         <span class="login-text">Login</span>
         <button class="dropdown-arrow">&#9662;</button>
         <div class="dropdown-menu">

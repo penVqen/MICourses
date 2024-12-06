@@ -1,42 +1,67 @@
 ﻿@page "/registration"
-
+@using MICourses.Models
 @using MICourses.Layout
+@using MICourses.Services
+@inject UserDataService UserDataService
+@inject NavigationManager NavigationManager
 
 <NavMenu />
 
 <div class="flex items-center justify-center h-screen">
     <div class="bg-white p-16 rounded shadow-md max-w-lg w-full">
-
         <h2 class="text-center mb-10" style="font-family: Arial; font-size: 2rem; font-weight: normal; white-space: nowrap;">Регистрация</h2>
 
-        <form class="space-y-10">
-            <div>
-                <input type="text" id="username" name="username"
-                       placeholder="Введите логин"
-                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+        @if (IsRegistrationSuccessful)
+        {
+            <div class="text-center">
+                <p class="text-green-500 text-lg">Вы успешно зарегистрировались! Перенаправление...</p>
             </div>
+        }
+        else
+        {
+            <form class="space-y-10" @onsubmit="HandleRegister">
+                <div>
+                    <input type="text" @bind="Login" placeholder="Введите логин"
+                           class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+                    @if (!string.IsNullOrEmpty(LoginErrorMessage))
+                    {
+                        <p class="text-red-500 mt-2">@LoginErrorMessage</p>
+                    }
+                </div>
 
-            <div>
-                <input type="email" id="email" name="email"
-                       placeholder="Введите email"
-                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
-            </div>
+                <div>
+                    <input type="email" @bind="Email" placeholder="Введите email"
+                           class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+                    @if (!string.IsNullOrEmpty(EmailErrorMessage))
+                    {
+                        <p class="text-red-500 mt-2">@EmailErrorMessage</p>
+                    }
+                </div>
 
-            <div>
-                <input type="password" id="password" name="password"
-                       placeholder="Придумайте пароль"
-                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
-                <p class="mt-2 text-sm text-gray-500">Не менее 6 символов</p>
-            </div>
+                <div>
+                    <input type="password" @bind="Password" placeholder="Придумайте пароль"
+                           class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
+                    @if (!string.IsNullOrEmpty(PasswordErrorMessage))
+                    {
+                        <p class="text-red-500 mt-2">@PasswordErrorMessage</p>
+                    }
+                    <p class="mt-2 text-sm text-gray-500">Не менее 6 символов, включая 1 цифру, 1 заглавную букву и 1 специальный символ.</p>
+                </div>
 
-            <div>
-                <button type="submit"
-                        class="w-full text-white py-3 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-                        style="background-color: rgb(178, 146, 215); font-size: 1.2rem;">
-                    Зарегистрироваться
-                </button>
-            </div>
-        </form>
+                <div>
+                    <button type="submit"
+                            class="w-full text-white py-3 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                            style="background-color: rgb(178, 146, 215); font-size: 1.2rem;">
+                        Зарегистрироваться
+                    </button>
+                </div>
+            </form>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <p class="text-red-500 text-center mt-4">@ErrorMessage</p>
+            }
+        }
 
         <p class="mt-10 text-center text-lg text-gray-600">
             Уже есть аккаунт?
@@ -44,3 +69,88 @@
         </p>
     </div>
 </div>
+
+@code {
+    private string Login { get; set; } = string.Empty;
+    private string Email { get; set; } = string.Empty;
+    private string Password { get; set; } = string.Empty;
+
+    private string ErrorMessage { get; set; }
+    private string LoginErrorMessage { get; set; }
+    private string EmailErrorMessage { get; set; }
+    private string PasswordErrorMessage { get; set; }
+    private bool IsRegistrationSuccessful { get; set; } = false;
+    private string SuccessMessage { get; set; }
+
+    private async Task HandleRegister()
+    {
+        ErrorMessage = string.Empty;
+        LoginErrorMessage = string.Empty;
+        EmailErrorMessage = string.Empty;
+        PasswordErrorMessage = string.Empty;
+
+        bool isValid = true;
+
+        if (string.IsNullOrWhiteSpace(Login))
+        {
+            LoginErrorMessage = "Поле логин не может быть пустым.";
+            isValid = false;
+        }
+        else if (Login.Length < 5 || Login.Length > 16)
+        {
+            LoginErrorMessage = "Длина логина должна быть от 5 до 16 символов.";
+            isValid = false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            EmailErrorMessage = "Поле email не может быть пустым.";
+            isValid = false;
+        }
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            EmailErrorMessage = "Введите корректный email.";
+            isValid = false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Password))
+        {
+            PasswordErrorMessage = "Поле пароль не может быть пустым.";
+            isValid = false;
+        }
+        else if (Password.Length < 6 || Password.Length > 16 || 
+                 !System.Text.RegularExpressions.Regex.IsMatch(Password, @"(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$"))
+        {
+            PasswordErrorMessage = "Пароль должен содержать от 6 до 16 символов, включая 1 заглавную букву, 1 цифру и 1 специальный символ.";
+            isValid = false;
+        }
+
+        if (!isValid)
+        {
+            return;
+        }
+
+        var userExists = await UserDataService.CheckUserExistsAsync(Login, Email);
+        if (userExists)
+        {
+            ErrorMessage = "Пользователь с таким логином или email уже существует.";
+            return;
+        }
+
+        var newUser = new User
+        {
+            Login = Login,
+            Email = Email,
+            Password = Password,
+            Role = "User",
+            Lvl = 100
+        };
+
+        await UserDataService.AddUserAsync(newUser);
+
+        IsRegistrationSuccessful = true;
+
+        await Task.Delay(2000);
+        NavigationManager.NavigateTo("/authorization");
+    }
+}
