@@ -18,18 +18,14 @@ namespace MICourses.Services
         /// <param name="loginOrEmail">Логин или Email пользователя</param>
         /// <param name="password">Пароль пользователя</param>
         /// <returns>True, если пользователь авторизован, иначе false.</returns>
-        public async Task<bool> AuthenticateUserAsync(string loginOrEmail, string password)
+        public async Task<User> AuthenticateUserAsync(string loginOrEmail, string password)
         {
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Login == loginOrEmail || u.Email == loginOrEmail);
+                .FirstOrDefaultAsync(u => (u.Login == loginOrEmail || u.Email == loginOrEmail) && u.Password == password);
 
-            if (user != null && user.Password == password)
-            {
-                return true;
-            }
-
-            return false;
+            return user; // Возвращаем пользователя, если логин и пароль корректны
         }
+
 
         /// <summary>
         /// Проверяет существование пользователя по логину или email.

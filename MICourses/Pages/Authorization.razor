@@ -3,6 +3,7 @@
 @using MICourses.Services
 @inject UserDataService UserDataService
 @inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUserService
 
 <NavMenu />
 
@@ -82,20 +83,15 @@
             return;
         }
 
-        var userExists = await UserDataService.CheckUserExistsAsync(LoginOrEmail);
-        if (!userExists)
+        var user = await UserDataService.AuthenticateUserAsync(LoginOrEmail, Password);
+
+        if (user == null)
         {
-            LoginErrorMessage = "Неверный логин/email.";
+            ErrorMessage = "Неверный логин/email или пароль.";
             return;
         }
 
-        var isPasswordCorrect = await UserDataService.VerifyPasswordAsync(LoginOrEmail, Password);
-        if (!isPasswordCorrect)
-        {
-            PasswordErrorMessage = "Неверный пароль.";
-            return;
-        }
-
+        CurrentUserService.SetCurrentUser(user); // Устанавливаем текущего пользователя
         NavigationManager.NavigateTo("/profile");
     }
 }
