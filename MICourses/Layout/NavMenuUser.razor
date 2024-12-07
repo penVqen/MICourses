@@ -15,19 +15,12 @@
     </div>
 
     <div class="dropdown">
-        @if (CurrentUserService.IsAuthenticated())
-        {
             <span class="login-text">@CurrentUserService.GetCurrentUser()?.Login</span>
             <button class="dropdown-arrow">&#9662;</button>
             <div class="dropdown-menu">
                 <a href="/profile">Профиль</a>
                 <a @onclick="Logout">Выход</a>
             </div>
-        }
-        else
-        {
-            <a href="/authorization" class="login-button">Вход</a>
-        }
     </div>
 </nav>
 
