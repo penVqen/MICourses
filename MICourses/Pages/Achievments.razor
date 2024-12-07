@@ -1,47 +1,102 @@
-﻿@page "/achievments"
+﻿@page "/achievements"
+@inject MIContext DbContext
+@inject CurrentUserService CurrentUserService
 
 <link href="css/site.css" rel="stylesheet">
 
 <div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto;">
 
-    <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; justify-content: center; align-items: center; min-height: 270px; max-height: 270px">
-
+    <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; min-height: 270px; max-height: 270px;">
         <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 160px; align-items: flex-start;">
-
             <a href="/education" class="customs-button">
                 <span class="iconify" data-icon="mdi:school-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Обучение</span>
             </a>
-
             <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 0;" />
-
             <a href="/homework" class="customs-button">
                 <span class="iconify" data-icon="mdi:clipboard-check-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Задания</span>
             </a>
-
             <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 0;" />
-
-            <a href="/achievments" class="custom-button">
+            <a href="/achievements" class="custom-button">
                 <span class="iconify" data-icon="mdi:trophy-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Достижения</span>
             </a>
-
         </div>
     </div>
 
     <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
 
-        <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); flex: 1; display: flex; justify-content: center; align-items: center;">
-                Первый блок
+        <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px; text-align: left;">
+            <h3 style="font-size: 24px; font-weight: bold; margin: 0;">LVL: @CurrentLevel</h3>
+            <div style="width: 100%; background: #E0E0E0; border-radius: 10px; height: 30px; position: relative; overflow: hidden;">
+                <div style="background: #b292d7; height: 100%; width: @ProgressWidth%; transition: width 0.3s;"></div>
             </div>
+            <span style="font-size: 14px; text-align: center;">@ProgressWidth% до следующего уровня</span>
         </div>
 
-        <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); flex: 1; display: flex; justify-content: center; align-items: center;">
-                Второй блок
-            </div>
+        <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-wrap: wrap; gap: 20px;">
+            @if (Achievements?.Any() == true)
+            {
+                @foreach (var achievement in Achievements)
+                {
+                    <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); width: 300px; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <img src="@achievement.Photo" alt="Achievement Photo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;" />
+                        <h4 style="font-size: 18px; font-weight: bold;">@achievement.Name</h4>
+                        <p style="font-size: 14px; color: #555;">@achievement.Description</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="text-align: center; font-size: 16px; color: #555;">Достижения отсутствуют</p>
+            }
         </div>
     </div>
 </div>
+
+@code {
+    private User User { get; set; }
+    private int CurrentLevel { get; set; }
+    private int ProgressWidth { get; set; }
+    private int LevelMin { get; set; }
+    private int LevelMax { get; set; }
+    private List<Achievment> Achievements { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser != null)
+        {
+            User = await DbContext.Users
+                .FirstOrDefaultAsync(u => u.ID_User == currentUser.ID_User);
+
+            if (User != null)
+            {
+                CalculateLevelProgress(User.Lvl);
+                await LoadAchievements();
+            }
+        }
+    }
+
+    private void CalculateLevelProgress(int lvl)
+    {
+        CurrentLevel = 1;
+        LevelMin = 0;
+        LevelMax = 200;
+
+        while (lvl > LevelMax)
+        {
+            CurrentLevel++;
+            LevelMin = LevelMax + 1;
+            LevelMax *= 2;
+        }
+
+        ProgressWidth = (int)(((double)(lvl - LevelMin) / (LevelMax - LevelMin)) * 100);
+    }
+
+    private async Task LoadAchievements()
+    {
+        Achievements = await DbContext.Achievments.ToListAsync();
+    }
+}

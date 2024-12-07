@@ -19,9 +19,6 @@ public partial class Users_Lesson
 
     public bool Status { get; set; }
 
-    [Column(TypeName = "date")]
-    public DateTime CompletionDate { get; set; }
-
     [ForeignKey("ID_Lesson")]
     [InverseProperty("Users_Lessons")]
     public virtual Lesson ID_LessonNavigation { get; set; }
