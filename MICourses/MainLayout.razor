@@ -1,9 +1,20 @@
-﻿@using MICourses.Layout
+﻿@using MICourses.Services
+@using MICourses.Layout
+@inject CurrentUserService CurrentUserService
 @inherits LayoutComponentBase
 
 <PageTitle>MI - Образовательный портал</PageTitle>
 
 <div>
+    @if (CurrentUserService.IsAuthenticated())
+    {
+        <NavMenuUser />
+    }
+    else
+    {
+        <NavMenu />
+    }
+
     <div class="main-content">
         @Body
     </div>
