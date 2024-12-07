@@ -173,6 +173,7 @@
         }
     }
 
+
     private void CancelChanges()
     {
         IsReadOnly = true;
@@ -218,7 +219,7 @@
 
     private void ValidateSurname()
     {
-        if (string.IsNullOrWhiteSpace(EditableUser.Surname) || !char.IsUpper(EditableUser.Surname[0]) || !EditableUser.Surname.All(char.IsLetter))
+        if (!string.IsNullOrWhiteSpace(EditableUser.Surname) && (!char.IsUpper(EditableUser.Surname[0]) || !EditableUser.Surname.All(char.IsLetter)))
         {
             SurnameError = "Фамилия должна начинаться с заглавной буквы и содержать только буквы.";
         }
@@ -230,7 +231,7 @@
 
     private void ValidateName()
     {
-        if (string.IsNullOrWhiteSpace(EditableUser.Name) || EditableUser.Name.Length < 2 || !char.IsUpper(EditableUser.Name[0]) || !EditableUser.Name.All(char.IsLetter))
+        if (!string.IsNullOrWhiteSpace(EditableUser.Name) && (EditableUser.Name.Length < 2 || !char.IsUpper(EditableUser.Name[0]) || !EditableUser.Name.All(char.IsLetter)))
         {
             NameError = "Имя должно начинаться с заглавной буквы, содержать только буквы и быть не менее 2 символов.";
         }
@@ -252,6 +253,7 @@
         }
     }
 
+
     private void ValidateBirthday()
     {
         if (EditableUser.Birthday.HasValue)
@@ -268,19 +270,21 @@
         }
         else
         {
-            BirthdayError = "Дата рождения обязательна.";
+            BirthdayError = null;
         }
     }
 
     private void ValidatePhoneNumber()
     {
-        if (string.IsNullOrWhiteSpace(EditableUser.PhoneNumber) || EditableUser.PhoneNumber.Length < 12 || EditableUser.PhoneNumber.Length > 12 || !EditableUser.PhoneNumber.All(c => char.IsDigit(c) || c == '+'))
+        if (!string.IsNullOrWhiteSpace(EditableUser.PhoneNumber) &&
+            (EditableUser.PhoneNumber.Length != 12 || !EditableUser.PhoneNumber.All(c => char.IsDigit(c) || c == '+')))
         {
-            PhoneNumberError = "Телефон должен содержать не более 12 символов, только цифры и символ '+'.";
+            PhoneNumberError = "Телефон должен содержать ровно 12 символов, только цифры и символ '+'.";
         }
         else
         {
             PhoneNumberError = null;
         }
     }
+
 }
