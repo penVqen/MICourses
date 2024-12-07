@@ -5,97 +5,102 @@
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
 
-<div class="container mx-auto max-w-screen-lg mt-12">
-    <h1 class="text-4xl font-bold mb-8">Личная информация</h1>
+<div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px;">
+    <div style="width: 100%; margin-top: 12px;">
+        <h1 class="text-4xl font-bold mb-8">Личная информация</h1>
 
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <form>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Фамилия</label>
-                    <input type="text" @bind="EditableUser.Surname" disabled="@IsReadOnly" @oninput="ValidateSurname"
-                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    @if (!string.IsNullOrWhiteSpace(SurnameError))
-                    {
-                        <span class="text-red-500 text-xs">@SurnameError</span>
-                    }
+        <div class="bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+            <form>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Фамилия</label>
+                        <input type="text" @bind="EditableUser.Surname" disabled="@IsReadOnly" @oninput="ValidateSurname"
+                               class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        @if (!string.IsNullOrWhiteSpace(SurnameError))
+                        {
+                            <span class="text-red-500 text-xs">@SurnameError</span>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Имя</label>
+                        <input type="text" @bind="EditableUser.Name" disabled="@IsReadOnly" @oninput="ValidateName"
+                               class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        @if (!string.IsNullOrWhiteSpace(NameError))
+                        {
+                            <span class="text-red-500 text-xs">@NameError</span>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Отчество</label>
+                        <input type="text" @bind="EditableUser.MiddleName" disabled="@IsReadOnly" @oninput="ValidateMiddleName"
+                               class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        @if (!string.IsNullOrWhiteSpace(MiddleNameError))
+                        {
+                            <span class="text-red-500 text-xs">@MiddleNameError</span>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Дата рождения</label>
+                        <input type="date" @bind="EditableUser.Birthday" disabled="@IsReadOnly" @oninput="ValidateBirthday"
+                               class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        @if (!string.IsNullOrWhiteSpace(BirthdayError))
+                        {
+                            <span class="text-red-500 text-xs">@BirthdayError</span>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Номер телефона</label>
+                        <input type="text" @bind="EditableUser.PhoneNumber" disabled="@IsReadOnly" @oninput="ValidatePhoneNumber"
+                               class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        @if (!string.IsNullOrWhiteSpace(PhoneNumberError))
+                        {
+                            <span class="text-red-500 text-xs">@PhoneNumberError</span>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Пол</label>
+                        <select @bind="EditableUser.Sex" disabled="@IsReadOnly"
+                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="Male">Мужской</option>
+                            <option value="Female">Женский</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Имя</label>
-                    <input type="text" @bind="EditableUser.Name" disabled="@IsReadOnly" @oninput="ValidateName"
-                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    @if (!string.IsNullOrWhiteSpace(NameError))
-                    {
-                        <span class="text-red-500 text-xs">@NameError</span>
-                    }
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Отчество</label>
-                    <input type="text" @bind="EditableUser.MiddleName" disabled="@IsReadOnly" @oninput="ValidateMiddleName"
-                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    @if (!string.IsNullOrWhiteSpace(MiddleNameError))
-                    {
-                        <span class="text-red-500 text-xs">@MiddleNameError</span>
-                    }
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Дата рождения</label>
-                    <input type="date" @bind="EditableUser.Birthday" disabled="@IsReadOnly" @oninput="ValidateBirthday"
-                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    @if (!string.IsNullOrWhiteSpace(BirthdayError))
-                    {
-                        <span class="text-red-500 text-xs">@BirthdayError</span>
-                    }
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Номер телефона</label>
-                    <input type="text" @bind="EditableUser.PhoneNumber" disabled="@IsReadOnly" @oninput="ValidatePhoneNumber"
-                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    @if (!string.IsNullOrWhiteSpace(PhoneNumberError))
-                    {
-                        <span class="text-red-500 text-xs">@PhoneNumberError</span>
-                    }
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Пол</label>
-                    <select @bind="EditableUser.Sex" disabled="@IsReadOnly"
-                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="Male">Мужской</option>
-                        <option value="Female">Женский</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="flex gap-4 mt-6">
-                @if (IsReadOnly)
-                {
-                    <button type="button" @onclick="EnableEditing"
-                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Редактировать
-                    </button>
-                }
-                else
-                {
-                    <button type="button" @onclick="SaveChanges"
-                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Сохранить
-                    </button>
-                    <button type="button" @onclick="CancelChanges"
-                            class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                        Отменить изменения
-                    </button>
-                }
-            </div>
-        </form>
-    </div>
+                <div class="flex gap-4 mt-6">
+                    @if (IsReadOnly)
+                    {
+                        <button type="button" @onclick="EnableEditing"
+                                class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                style="background-color: rgb(178, 146, 215);">
+                            Редактировать
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" @onclick="SaveChanges"
+                                class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                style="background-color: rgb(178, 146, 215);">
+                            Сохранить
+                        </button>
+                        <button type="button" @onclick="CancelChanges"
+                                class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                            Отменить изменения
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
 
-    <div class="mt-10 bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-lg font-bold">Удаление профиля</h2>
-        <p class="text-sm text-gray-600">После нажатия кнопки 'Удалить профиль' все ваши данные будут безвозвратно удалены.</p>
-        <button type="button" @onclick="DeleteProfile"
-                class="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-            Удалить профиль
-        </button>
+        <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+            <h2 class="text-lg font-bold">Удаление профиля</h2>
+            <p class="text-sm text-gray-600">После нажатия кнопки 'Удалить профиль' все ваши данные будут безвозвратно удалены.</p>
+            <button type="button" @onclick="DeleteProfile"
+                    class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    style="background-color: black;">
+                Удалить профиль
+            </button>
+        </div>
     </div>
 </div>
 
