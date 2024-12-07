@@ -23,6 +23,8 @@ public partial class Achievment
 
     public string Condition { get; set; }
 
+    public string Photo { get; set; }
+
     [InverseProperty("ID_AchievmentNavigation")]
     public virtual ICollection<Users_Achievment> Users_Achievments { get; set; } = new List<Users_Achievment>();
 }

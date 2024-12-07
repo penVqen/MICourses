@@ -19,9 +19,6 @@ public partial class Users_Test
 
     public int Score { get; set; }
 
-    [Column(TypeName = "date")]
-    public DateTime CompletionDate { get; set; }
-
     [ForeignKey("ID_Test")]
     [InverseProperty("Users_Tests")]
     public virtual Test ID_TestNavigation { get; set; }
