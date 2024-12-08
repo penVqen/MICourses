@@ -17,7 +17,7 @@ public partial class Users_Test
 
     public int ID_Test { get; set; }
 
-    public int Score { get; set; }
+    public int? Score { get; set; }
 
     [ForeignKey("ID_Test")]
     [InverseProperty("Users_Tests")]
