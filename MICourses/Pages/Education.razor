@@ -129,7 +129,7 @@
                 .Include(uc => uc.ID_CourseNavigation)
                 .Where(uc => uc.ID_User == currentUser.ID_User)
                 .ToListAsync();
-            FilteredCourses = Courses.Where(c => !c.Status).ToList(); // Default filter for courses in progress
+            FilteredCourses = Courses.Where(c => !c.Status).ToList();
         }
         else
         {
@@ -159,7 +159,7 @@
             .Include(ul => ul.ID_LessonNavigation)
             .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
             .ToListAsync();
-        FilteredLessons = Lessons.Where(l => !l.Status).ToList(); // Default filter for lessons in progress
+        FilteredLessons = Lessons.Where(l => !l.Status).ToList();
     }
 
     private void ShowInProgressLessons()
