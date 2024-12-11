@@ -1,11 +1,11 @@
 ﻿@page "/education"
 @inject MIContext DbContext
 @inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
 
 <link href="css/site.css" rel="stylesheet">
 
 <div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto;">
-
     <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; min-height: 270px; max-height: 270px;">
         <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 160px; align-items: flex-start;">
             <a href="/education" class="custom-button">
@@ -45,22 +45,22 @@
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 @if (FilteredCourses == null || !FilteredCourses.Any())
                 {
-                    <div>Нет курсов для отображения.</div>
+                        <div>Нет курсов для отображения.</div>
                 }
                 else
                 {
                     foreach (var userCourse in FilteredCourses)
                     {
-                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                Курс: @userCourse.ID_CourseNavigation.Name
-                            </span>
-                            <div style="display: flex; gap: 10px;">
-                                <button @onclick="() => SelectCourse(userCourse)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                    Выбрать
-                                </button>
-                            </div>
-                        </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                                    <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                        Курс: @userCourse.ID_CourseNavigation.Name
+                                    </span>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button @onclick="() => SelectCourse(userCourse)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Выбрать
+                                        </button>
+                                    </div>
+                                </div>
                     }
                 }
             </div>
@@ -68,73 +68,34 @@
 
         @if (SelectedCourse != null)
         {
-            <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button @onclick="ShowInProgressLessons"
-                            style="@GetButtonStyle(InProgressLessonsSelected)"
-                            @onmouseover="ChangeButtonColor"
-                            @onmouseleave="ResetButtonColor">
-                        Текущие
-                    </button>
-                    <button @onclick="ShowCompletedLessons"
-                            style="@GetButtonStyle(CompletedLessonsSelected)"
-                            @onmouseover="ChangeButtonColor"
-                            @onmouseleave="ResetButtonColor">
-                        Прочитанные
-                    </button>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
                     @if (FilteredLessons == null || !FilteredLessons.Any())
                     {
-                        <div>Нет уроков для отображения.</div>
+                                <div>Нет уроков для отображения.</div>
                     }
                     else
                     {
                         foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.ID_Lesson))
                         {
-                            <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                    Урок @userLesson.ID_LessonNavigation.Name
-                                </span>
-                                <div style="display: flex; gap: 10px;">
-                                    <button @onclick="() => SelectLesson(userLesson)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                        Выбрать
-                                    </button>
-                                </div>
-                            </div>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                                Урок @userLesson.ID_LessonNavigation.Name
+                                            </span>
+                                            <div style="display: flex; gap: 10px;">
+                                                <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)" 
+                                                        style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                                    Перейти
+                                                </button>
+                                            </div>
+                                        </div>
                         }
                     }
+                    </div>
                 </div>
-            </div>
         }
     </div>
 </div>
-
-@if (IsModalOpen)
-{
-    <div class="modal-overlay">
-        <div class="modal-content-large">
-            <button @onclick="CloseModal" class="close-button-large">
-                <span class="iconify" data-icon="mdi:close" style="font-size: 24px; color: black;"></span>
-            </button>
-
-            <h2 style="font-size: 40px; font-weight: bold; margin-bottom: 13px;">Урок: @SelectedLesson?.ID_LessonNavigation.Name</h2>
-            <p style="font-size: 16px; line-height: 1.5; text-align: justify; margin-bottom: 60px;">
-                @SelectedLesson?.ID_LessonNavigation.Description
-            </p>
-            <p style="font-size: 20px; line-height: 1.5; text-align: justify; margin-bottom: 60px;">
-                @SelectedLesson?.ID_LessonNavigation.Text
-            </p>
-
-            <div class="flex justify-center mt-6">
-                <button class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                    Отметить прочитанным
-                </button>
-            </div>
-        </div>
-    </div>
-}
 
 @code {
     private List<Users_Course> Courses;
@@ -143,8 +104,6 @@
 
     private List<Users_Lesson> Lessons;
     private List<Users_Lesson> FilteredLessons;
-    private Users_Lesson SelectedLesson;
-    private bool IsModalOpen;
 
     private bool InProgressCoursesSelected { get; set; } = true;
     private bool CompletedCoursesSelected { get; set; }
@@ -200,22 +159,9 @@
         FilteredLessons = Lessons.Where(l => !l.Status).ToList();
     }
 
-    private void ShowCompletedLessons()
+    private void NavigateToLesson(int lessonId)
     {
-        InProgressLessonsSelected = false;
-        CompletedLessonsSelected = true;
-        FilteredLessons = Lessons.Where(l => l.Status).ToList();
-    }
-
-    private async Task SelectLesson(Users_Lesson lesson)
-    {
-        SelectedLesson = lesson;
-        IsModalOpen = true;
-    }
-
-    private void CloseModal()
-    {
-        IsModalOpen = false;
+        NavigationManager.NavigateTo($"/lesson/{lessonId}");
     }
 
     private string GetButtonStyle(bool isSelected)
