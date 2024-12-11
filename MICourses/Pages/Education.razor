@@ -29,15 +29,13 @@
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <button @onclick="ShowInProgressCourses"
-                        style="@GetButtonStyle(InProgressCoursesSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                        class="custom-button-hover"
+                        style="@GetButtonStyle(InProgressCoursesSelected)">
                     В процессе
                 </button>
                 <button @onclick="ShowCompletedCourses"
-                        style="@GetButtonStyle(CompletedCoursesSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                        class="custom-button-hover"
+                        style="@GetButtonStyle(CompletedCoursesSelected)">
                     Пройденные
                 </button>
             </div>
@@ -45,22 +43,22 @@
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 @if (FilteredCourses == null || !FilteredCourses.Any())
                 {
-                        <div>Нет курсов для отображения.</div>
+                    <div>Нет курсов для отображения.</div>
                 }
                 else
                 {
                     foreach (var userCourse in FilteredCourses)
                     {
-                                <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                                    <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                        Курс: @userCourse.ID_CourseNavigation.Name
-                                    </span>
-                                    <div style="display: flex; gap: 10px;">
-                                        <button @onclick="() => SelectCourse(userCourse)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                            Выбрать
-                                        </button>
-                                    </div>
-                                </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                Курс: @userCourse.ID_CourseNavigation.Name
+                            </span>
+                            <div style="display: flex; gap: 10px;">
+                                <button @onclick="() => SelectCourse(userCourse)" class="custom-button-hover" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                    Выбрать
+                                </button>
+                            </div>
+                        </div>
                     }
                 }
             </div>
@@ -68,31 +66,43 @@
 
         @if (SelectedCourse != null)
         {
-                <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button @onclick="ShowInProgressLessons"
+                            class="custom-button-hover"
+                            style="@GetButtonStyle(InProgressLessonsSelected)">
+                        Текущие
+                    </button>
+                    <button @onclick="ShowCompletedLessons"
+                            class="custom-button-hover"
+                            style="@GetButtonStyle(CompletedLessonsSelected)">
+                        Пройденные
+                    </button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;">
                     @if (FilteredLessons == null || !FilteredLessons.Any())
                     {
-                                <div>Нет уроков для отображения.</div>
+                        <div>Нет уроков для отображения.</div>
                     }
                     else
                     {
                         foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.ID_Lesson))
                         {
-                                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                                Урок @userLesson.ID_LessonNavigation.Name
-                                            </span>
-                                            <div style="display: flex; gap: 10px;">
-                                                <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)" 
-                                                        style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                                    Перейти
-                                                </button>
-                                            </div>
-                                        </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                    Урок @userLesson.ID_LessonNavigation.Name
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)" class="custom-button-hover" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                        Перейти
+                                    </button>
+                                </div>
+                            </div>
                         }
                     }
-                    </div>
                 </div>
+            </div>
         }
     </div>
 </div>
@@ -159,6 +169,13 @@
         FilteredLessons = Lessons.Where(l => !l.Status).ToList();
     }
 
+    private void ShowCompletedLessons()
+    {
+        InProgressLessonsSelected = false;
+        CompletedLessonsSelected = true;
+        FilteredLessons = Lessons.Where(l => l.Status).ToList();
+    }
+
     private void NavigateToLesson(int lessonId)
     {
         NavigationManager.NavigateTo($"/lesson/{lessonId}");
@@ -167,15 +184,5 @@
     private string GetButtonStyle(bool isSelected)
     {
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
-    }
-
-    private void ChangeButtonColor()
-    {
-        // Add hover effect for button color
-    }
-
-    private void ResetButtonColor()
-    {
-        // Reset hover effect for button color
     }
 }
