@@ -29,22 +29,13 @@
 
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; align-self: flex-start;">
-                <button @onclick="ShowInProgressTests"
-                        style="@GetButtonStyle(InProgressTestsSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                <button @onclick="ShowInProgressTests" style="@GetButtonStyle(InProgressTestsSelected)">
                     Текущие тесты
                 </button>
-                <button @onclick="ShowCheckedTests"
-                        style="@GetButtonStyle(CheckedTestsSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                <button @onclick="ShowCheckedTests" style="@GetButtonStyle(CheckedTestsSelected)">
                     На проверке
                 </button>
-                <button @onclick="ShowCompletedTests"
-                        style="@GetButtonStyle(CompletedTestsSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
                     Завершённые тесты
                 </button>
             </div>
@@ -56,16 +47,22 @@
                 }
                 else
                 {
-                    foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.Name))
+                    @foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.Name))
                     {
-                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                Тест: @userTest.ID_TestNavigation.Name
-                            </span>
-                            <div style="display: flex; gap: 10px;">
-                                <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                    Выбрать
-                                </button>
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                    Тест: @userTest.ID_TestNavigation.Name
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    <button style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                        Выбрать
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
+                                Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
                             </div>
                         </div>
                     }
@@ -104,9 +101,12 @@
 
             Tests = await DbContext.Users_Tests
                 .Include(ut => ut.ID_TestNavigation)
+                    .ThenInclude(t => t.ID_LessonNavigation)
+                        .ThenInclude(l => l.ID_CourseNavigation)
                 .Where(ut => ut.ID_User == currentUser.ID_User)
                 .ToListAsync();
-            FilteredTests = Tests.Where(t => t.Score == null).ToList(); // Default filter for in-progress tests
+
+            FilteredTests = Tests.Where(t => t.Score == null).ToList();
         }
         else
         {
@@ -141,23 +141,8 @@
         FilteredTests = Tests.Where(t => t.Score > 0).ToList();
     }
 
-    private async Task SelectTest(Users_Test test)
-    {
-        // Implement the logic for selecting a test
-    }
-
     private string GetButtonStyle(bool isSelected)
     {
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
-    }
-
-    private void ChangeButtonColor()
-    {
-        // Add hover effect for button color
-    }
-
-    private void ResetButtonColor()
-    {
-        // Reset hover effect for button color
     }
 }
