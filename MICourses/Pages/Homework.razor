@@ -29,13 +29,22 @@
 
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; align-self: flex-start;">
-                <button @onclick="ShowInProgressTests" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                <button @onclick="ShowInProgressTests"
+                        style="@GetButtonStyle(InProgressTestsSelected)"
+                        @onmouseover="ChangeButtonColor"
+                        @onmouseleave="ResetButtonColor">
                     Текущие тесты
                 </button>
-                <button @onclick="ShowCheckedTests" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                <button @onclick="ShowCheckedTests"
+                        style="@GetButtonStyle(CheckedTestsSelected)"
+                        @onmouseover="ChangeButtonColor"
+                        @onmouseleave="ResetButtonColor">
                     На проверке
                 </button>
-                <button @onclick="ShowCompletedTests" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                <button @onclick="ShowCompletedTests"
+                        style="@GetButtonStyle(CompletedTestsSelected)"
+                        @onmouseover="ChangeButtonColor"
+                        @onmouseleave="ResetButtonColor">
                     Завершённые тесты
                 </button>
             </div>
@@ -78,6 +87,10 @@
     private List<Users_Test> Tests;
     private List<Users_Test> FilteredTests;
 
+    private bool InProgressTestsSelected { get; set; } = true;
+    private bool CheckedTestsSelected { get; set; }
+    private bool CompletedTestsSelected { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
@@ -93,9 +106,7 @@
                 .Include(ut => ut.ID_TestNavigation)
                 .Where(ut => ut.ID_User == currentUser.ID_User)
                 .ToListAsync();
-            FilteredTests = Tests;
-
-            ShowInProgressTests();
+            FilteredTests = Tests.Where(t => t.Score == null).ToList(); // Default filter for in-progress tests
         }
         else
         {
@@ -106,28 +117,47 @@
         }
     }
 
-    private void ShowInProgressCourses() => FilteredCourses = Courses.Where(c => !c.Status).ToList();
-    private void ShowCompletedCourses() => FilteredCourses = Courses.Where(c => c.Status).ToList();
-
-    private void ShowInProgressTests() => FilteredTests = Tests.Where(t => t.Score == null).ToList();
-    private void ShowCheckedTests() => FilteredTests = Tests.Where(t => t.Score == 0).ToList();
-    private void ShowCompletedTests() => FilteredTests = Tests.Where(t => t.Score > 0).ToList();
-
-    private async Task SelectCourse(Users_Course course)
+    private void ShowInProgressTests()
     {
-        SelectedCourse = course;
-        Lessons = await DbContext.Users_Lessons
-            .Include(ul => ul.ID_LessonNavigation)
-            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
-            .ToListAsync();
-        FilteredLessons = Lessons;
+        InProgressTestsSelected = true;
+        CheckedTestsSelected = false;
+        CompletedTestsSelected = false;
+        FilteredTests = Tests.Where(t => t.Score == null).ToList();
     }
 
-    private void ShowInProgressLessons() => FilteredLessons = Lessons.Where(l => !l.Status).ToList();
-    private void ShowCompletedLessons() => FilteredLessons = Lessons.Where(l => l.Status).ToList();
+    private void ShowCheckedTests()
+    {
+        InProgressTestsSelected = false;
+        CheckedTestsSelected = true;
+        CompletedTestsSelected = false;
+        FilteredTests = Tests.Where(t => t.Score == 0).ToList();
+    }
+
+    private void ShowCompletedTests()
+    {
+        InProgressTestsSelected = false;
+        CheckedTestsSelected = false;
+        CompletedTestsSelected = true;
+        FilteredTests = Tests.Where(t => t.Score > 0).ToList();
+    }
 
     private async Task SelectTest(Users_Test test)
     {
+        // Implement the logic for selecting a test
+    }
 
+    private string GetButtonStyle(bool isSelected)
+    {
+        return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
+    }
+
+    private void ChangeButtonColor()
+    {
+        // Add hover effect for button color
+    }
+
+    private void ResetButtonColor()
+    {
+        // Reset hover effect for button color
     }
 }

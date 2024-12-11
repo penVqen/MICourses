@@ -28,10 +28,16 @@
     <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button @onclick="ShowInProgressCourses" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                <button @onclick="ShowInProgressCourses"
+                        style="@GetButtonStyle(InProgressCoursesSelected)"
+                        @onmouseover="ChangeButtonColor"
+                        @onmouseleave="ResetButtonColor">
                     В процессе
                 </button>
-                <button @onclick="ShowCompletedCourses" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                <button @onclick="ShowCompletedCourses"
+                        style="@GetButtonStyle(CompletedCoursesSelected)"
+                        @onmouseover="ChangeButtonColor"
+                        @onmouseleave="ResetButtonColor">
                     Пройденные
                 </button>
             </div>
@@ -64,10 +70,16 @@
         {
             <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button @onclick="ShowInProgressLessons" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                    <button @onclick="ShowInProgressLessons"
+                            style="@GetButtonStyle(InProgressLessonsSelected)"
+                            @onmouseover="ChangeButtonColor"
+                            @onmouseleave="ResetButtonColor">
                         Текущие
                     </button>
-                    <button @onclick="ShowCompletedLessons" style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                    <button @onclick="ShowCompletedLessons"
+                            style="@GetButtonStyle(CompletedLessonsSelected)"
+                            @onmouseover="ChangeButtonColor"
+                            @onmouseleave="ResetButtonColor">
                         Прочитанные
                     </button>
                 </div>
@@ -134,6 +146,11 @@
     private Users_Lesson SelectedLesson;
     private bool IsModalOpen;
 
+    private bool InProgressCoursesSelected { get; set; } = true;
+    private bool CompletedCoursesSelected { get; set; }
+    private bool InProgressLessonsSelected { get; set; } = true;
+    private bool CompletedLessonsSelected { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
@@ -143,7 +160,7 @@
                 .Include(uc => uc.ID_CourseNavigation)
                 .Where(uc => uc.ID_User == currentUser.ID_User)
                 .ToListAsync();
-            FilteredCourses = Courses;
+            FilteredCourses = Courses.Where(c => !c.Status).ToList(); // Default filter for courses in progress
         }
         else
         {
@@ -152,8 +169,19 @@
         }
     }
 
-    private void ShowInProgressCourses() => FilteredCourses = Courses.Where(c => !c.Status).ToList();
-    private void ShowCompletedCourses() => FilteredCourses = Courses.Where(c => c.Status).ToList();
+    private void ShowInProgressCourses()
+    {
+        InProgressCoursesSelected = true;
+        CompletedCoursesSelected = false;
+        FilteredCourses = Courses.Where(c => !c.Status).ToList();
+    }
+
+    private void ShowCompletedCourses()
+    {
+        InProgressCoursesSelected = false;
+        CompletedCoursesSelected = true;
+        FilteredCourses = Courses.Where(c => c.Status).ToList();
+    }
 
     private async Task SelectCourse(Users_Course course)
     {
@@ -162,11 +190,22 @@
             .Include(ul => ul.ID_LessonNavigation)
             .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
             .ToListAsync();
-        FilteredLessons = Lessons;
+        FilteredLessons = Lessons.Where(l => !l.Status).ToList(); // Default filter for lessons in progress
     }
 
-    private void ShowInProgressLessons() => FilteredLessons = Lessons.Where(l => !l.Status).ToList();
-    private void ShowCompletedLessons() => FilteredLessons = Lessons.Where(l => l.Status).ToList();
+    private void ShowInProgressLessons()
+    {
+        InProgressLessonsSelected = true;
+        CompletedLessonsSelected = false;
+        FilteredLessons = Lessons.Where(l => !l.Status).ToList();
+    }
+
+    private void ShowCompletedLessons()
+    {
+        InProgressLessonsSelected = false;
+        CompletedLessonsSelected = true;
+        FilteredLessons = Lessons.Where(l => l.Status).ToList();
+    }
 
     private async Task SelectLesson(Users_Lesson lesson)
     {
@@ -177,5 +216,20 @@
     private void CloseModal()
     {
         IsModalOpen = false;
+    }
+
+    private string GetButtonStyle(bool isSelected)
+    {
+        return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
+    }
+
+    private void ChangeButtonColor()
+    {
+        // Add hover effect for button color
+    }
+
+    private void ResetButtonColor()
+    {
+        // Reset hover effect for button color
     }
 }
