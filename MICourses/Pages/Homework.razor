@@ -34,10 +34,6 @@
                         style="@GetButtonStyle(InProgressTestsSelected)">
                     Текущие тесты
                 </button>
-                <button @onclick="ShowCheckedTests"
-                        style="@GetButtonStyle(CheckedTestsSelected)">
-                    На проверке
-                </button>
                 <button @onclick="ShowCompletedTests"
                         style="@GetButtonStyle(CompletedTestsSelected)">
                     Завершённые тесты
@@ -59,9 +55,18 @@
                                     @userTest.ID_TestNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
-                                    <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                        Выбрать
-                                    </button>
+                                    @if (userTest.Score.HasValue)
+                                    {
+                                        <span style="background: #D1C4E9; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; margin-top: 30px; font-size: 14px;">
+                                            Оценка: @userTest.Score
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                                            Выбрать
+                                        </button>
+                                    }
                                 </div>
                             </div>
                             <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
@@ -71,8 +76,8 @@
                     }
                 }
             </div>
+        </div>
     </div>
-</div>
 </div>
 
 @code {
@@ -80,7 +85,6 @@
     private List<Users_Test> FilteredTests;
 
     private bool InProgressTestsSelected { get; set; } = true;
-    private bool CheckedTestsSelected { get; set; }
     private bool CompletedTestsSelected { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -110,27 +114,15 @@
     private void ShowInProgressTests()
     {
         InProgressTestsSelected = true;
-        CheckedTestsSelected = false;
         CompletedTestsSelected = false;
 
         var completedLessons = Tests.Select(t => t.ID_TestNavigation.ID_Lesson).ToList();
         FilteredTests = Tests.Where(t => completedLessons.Contains(t.ID_TestNavigation.ID_Lesson) && t.Score == null).ToList();
     }
 
-    private void ShowCheckedTests()
-    {
-        InProgressTestsSelected = false;
-        CheckedTestsSelected = true;
-        CompletedTestsSelected = false;
-
-        var completedLessons = Tests.Select(t => t.ID_TestNavigation.ID_Lesson).ToList();
-        FilteredTests = Tests.Where(t => completedLessons.Contains(t.ID_TestNavigation.ID_Lesson) && t.Score == 0).ToList();
-    }
-
     private void ShowCompletedTests()
     {
         InProgressTestsSelected = false;
-        CheckedTestsSelected = false;
         CompletedTestsSelected = true;
 
         var completedLessons = Tests.Select(t => t.ID_TestNavigation.ID_Lesson).ToList();
@@ -147,4 +139,3 @@
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
     }
 }
-
