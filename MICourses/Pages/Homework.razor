@@ -1,6 +1,7 @@
 ﻿@page "/homework"
 @inject MIContext DbContext
 @inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
 
 <link href="css/site.css" rel="stylesheet">
 
@@ -29,13 +30,16 @@
 
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; align-self: flex-start;">
-                <button @onclick="ShowInProgressTests" style="@GetButtonStyle(InProgressTestsSelected)">
+                <button @onclick="ShowInProgressTests"
+                        style="@GetButtonStyle(InProgressTestsSelected)">
                     Текущие тесты
                 </button>
-                <button @onclick="ShowCheckedTests" style="@GetButtonStyle(CheckedTestsSelected)">
+                <button @onclick="ShowCheckedTests"
+                        style="@GetButtonStyle(CheckedTestsSelected)">
                     На проверке
                 </button>
-                <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
+                <button @onclick="ShowCompletedTests"
+                        style="@GetButtonStyle(CompletedTestsSelected)">
                     Завершённые тесты
                 </button>
             </div>
@@ -47,22 +51,16 @@
                 }
                 else
                 {
-                    @foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.Name))
+                    foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.Name))
                     {
-                        <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                            <div style="display: flex; justify-content: space-between; width: 100%;">
-                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                    Тест: @userTest.ID_TestNavigation.Name
-                                </span>
-                                <div style="display: flex; gap: 10px;">
-                                    <button style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                        Выбрать
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
-                                Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                Тест: @userTest.ID_TestNavigation.Name
+                            </span>
+                            <div style="display: flex; gap: 10px;">
+                                <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                    Выбрать
+                                </button>
                             </div>
                         </div>
                     }
@@ -93,25 +91,24 @@
         var currentUser = CurrentUserService.GetCurrentUser();
         if (currentUser != null)
         {
-            Courses = await DbContext.Users_Courses
-                .Include(uc => uc.ID_CourseNavigation)
-                .Where(uc => uc.ID_User == currentUser.ID_User)
+            Lessons = await DbContext.Users_Lessons
+                .Include(ul => ul.ID_LessonNavigation)
+                .Where(ul => ul.ID_User == currentUser.ID_User && ul.Status == true)
                 .ToListAsync();
-            FilteredCourses = Courses;
+
+            var completedLessonIds = Lessons.Select(ul => ul.ID_Lesson).ToHashSet();
 
             Tests = await DbContext.Users_Tests
                 .Include(ut => ut.ID_TestNavigation)
-                    .ThenInclude(t => t.ID_LessonNavigation)
-                        .ThenInclude(l => l.ID_CourseNavigation)
-                .Where(ut => ut.ID_User == currentUser.ID_User)
+                .ThenInclude(t => t.ID_LessonNavigation)
+                .Where(ut => ut.ID_User == currentUser.ID_User && completedLessonIds.Contains(ut.ID_TestNavigation.ID_Lesson))
                 .ToListAsync();
 
             FilteredTests = Tests.Where(t => t.Score == null).ToList();
         }
         else
         {
-            Courses = new List<Users_Course>();
-            FilteredCourses = Courses;
+            Lessons = new List<Users_Lesson>();
             Tests = new List<Users_Test>();
             FilteredTests = Tests;
         }
@@ -139,6 +136,11 @@
         CheckedTestsSelected = false;
         CompletedTestsSelected = true;
         FilteredTests = Tests.Where(t => t.Score > 0).ToList();
+    }
+
+    private void SelectTest(Users_Test test)
+    {
+        NavigationManager.NavigateTo($"/test/{test.ID_Test}");
     }
 
     private string GetButtonStyle(bool isSelected)
