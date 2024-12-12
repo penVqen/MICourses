@@ -1,0 +1,53 @@
+﻿@page "/test/{TestId:int}"
+@using MICourses.Models
+@inject MIContext DbContext
+
+<div class="w-4/5 mx-auto py-10 space-y-5">
+    <h1 class="text-2xl font-semibold text-gray-800">Тест: @TestModel?.Name</h1>
+    @if (Questions == null || !Questions.Any())
+    {
+        <div class="text-gray-500">Вопросы отсутствуют.</div>
+    }
+    else
+    {
+        foreach (var question in Questions)
+        {
+            <div class="bg-white rounded-lg p-5 shadow-md space-y-3">
+                <h2 class="text-lg font-medium text-gray-700">@question.Text</h2>
+                @if (question.Answers.Count == 1)
+                {
+                    <input type="text" class="w-full border rounded-lg p-2 text-gray-700" placeholder="Ваш ответ">
+                }
+                else
+                {
+                    foreach (var answer in question.Answers)
+                    {
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" class="form-checkbox text-purple-600">
+                            <span class="text-gray-700">@answer.Text</span>
+                        </label>
+                    }
+                }
+            </div>
+        }
+    }
+    <button class="bg-purple-500 text-white rounded-lg px-6 py-2 hover:bg-purple-600">Отправить</button>
+</div>
+
+@code {
+    [Parameter]
+    public int TestId { get; set; }
+
+    private MICourses.Models.Test TestModel;
+    private List<Question> Questions;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        TestModel = await DbContext.Tests
+            .Include(t => t.Questions)
+                .ThenInclude(q => q.Answers)
+            .FirstOrDefaultAsync(t => t.ID_Test == TestId);
+
+        Questions = TestModel?.Questions.ToList();
+    }
+}

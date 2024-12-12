@@ -1,10 +1,11 @@
 ﻿@page "/homework"
 @inject MIContext DbContext
 @inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
 
 <link href="css/site.css" rel="stylesheet">
 
-<div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto;">
+<div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto; min-height: 100vh;">
 
     <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; min-height: 270px; max-height: 270px;">
         <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 160px; align-items: flex-start;">
@@ -30,21 +31,15 @@
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; align-self: flex-start;">
                 <button @onclick="ShowInProgressTests"
-                        style="@GetButtonStyle(InProgressTestsSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                        style="@GetButtonStyle(InProgressTestsSelected)">
                     Текущие тесты
                 </button>
                 <button @onclick="ShowCheckedTests"
-                        style="@GetButtonStyle(CheckedTestsSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                        style="@GetButtonStyle(CheckedTestsSelected)">
                     На проверке
                 </button>
                 <button @onclick="ShowCompletedTests"
-                        style="@GetButtonStyle(CompletedTestsSelected)"
-                        @onmouseover="ChangeButtonColor"
-                        @onmouseleave="ResetButtonColor">
+                        style="@GetButtonStyle(CompletedTestsSelected)">
                     Завершённые тесты
                 </button>
             </div>
@@ -58,14 +53,20 @@
                 {
                     foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.Name))
                     {
-                        <div style="display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                Тест: @userTest.ID_TestNavigation.Name
-                            </span>
-                            <div style="display: flex; gap: 10px;">
-                                <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                    Выбрать
-                                </button>
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                    @userTest.ID_TestNavigation.Name
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    <button style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                        Выбрать
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
+                                Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
                             </div>
                         </div>
                     }
@@ -96,22 +97,24 @@
         var currentUser = CurrentUserService.GetCurrentUser();
         if (currentUser != null)
         {
-            Courses = await DbContext.Users_Courses
-                .Include(uc => uc.ID_CourseNavigation)
-                .Where(uc => uc.ID_User == currentUser.ID_User)
+            Lessons = await DbContext.Users_Lessons
+                .Include(ul => ul.ID_LessonNavigation)
+                .Where(ul => ul.ID_User == currentUser.ID_User && ul.Status == true)
                 .ToListAsync();
-            FilteredCourses = Courses;
+
+            var completedLessonIds = Lessons.Select(ul => ul.ID_Lesson).ToHashSet();
 
             Tests = await DbContext.Users_Tests
                 .Include(ut => ut.ID_TestNavigation)
-                .Where(ut => ut.ID_User == currentUser.ID_User)
+                .ThenInclude(t => t.ID_LessonNavigation)
+                .Where(ut => ut.ID_User == currentUser.ID_User && completedLessonIds.Contains(ut.ID_TestNavigation.ID_Lesson))
                 .ToListAsync();
-            FilteredTests = Tests.Where(t => t.Score == null).ToList(); // Default filter for in-progress tests
+
+            FilteredTests = Tests.Where(t => t.Score == null).ToList();
         }
         else
         {
-            Courses = new List<Users_Course>();
-            FilteredCourses = Courses;
+            Lessons = new List<Users_Lesson>();
             Tests = new List<Users_Test>();
             FilteredTests = Tests;
         }
@@ -141,23 +144,13 @@
         FilteredTests = Tests.Where(t => t.Score > 0).ToList();
     }
 
-    private async Task SelectTest(Users_Test test)
+    private void SelectTest(Users_Test test)
     {
-        // Implement the logic for selecting a test
+        NavigationManager.NavigateTo($"/test/{test.ID_Test}");
     }
 
     private string GetButtonStyle(bool isSelected)
     {
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
-    }
-
-    private void ChangeButtonColor()
-    {
-        // Add hover effect for button color
-    }
-
-    private void ResetButtonColor()
-    {
-        // Reset hover effect for button color
     }
 }
