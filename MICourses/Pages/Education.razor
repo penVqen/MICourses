@@ -93,14 +93,16 @@
                         }
                         else
                         {
-                            foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.ID_Lesson))
+                            foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.Number))
                             {
                                 <div style="display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
                                     <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
                                         @userLesson.ID_LessonNavigation.Name
                                     </span>
                                     <div style="display: flex; gap: 10px;">
-                                        <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)" class="custom-button-hover" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                        <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
+                                                class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
                                             Перейти
                                         </button>
                                     </div>
@@ -145,6 +147,39 @@
         }
     }
 
+    private async Task SelectCourse(Users_Course course)
+    {
+        SelectedCourse = course;
+        Lessons = await DbContext.Users_Lessons
+            .Include(ul => ul.ID_LessonNavigation)
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
+            .OrderBy(ul => ul.ID_LessonNavigation.Number)
+            .ToListAsync();
+
+        FilteredLessons = GetSequentialLessons(Lessons);
+    }
+
+    private List<Users_Lesson> GetSequentialLessons(List<Users_Lesson> lessons)
+    {
+        var filtered = new List<Users_Lesson>();
+        bool canAddNextLesson = true;
+
+        foreach (var lesson in lessons)
+        {
+            if (canAddNextLesson)
+            {
+                filtered.Add(lesson);
+                canAddNextLesson = lesson.Status;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return filtered;
+    }
+
     private void ShowInProgressCourses()
     {
         InProgressCoursesSelected = true;
@@ -159,21 +194,11 @@
         FilteredCourses = Courses.Where(c => c.Status).ToList();
     }
 
-    private async Task SelectCourse(Users_Course course)
-    {
-        SelectedCourse = course;
-        Lessons = await DbContext.Users_Lessons
-            .Include(ul => ul.ID_LessonNavigation)
-            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
-            .ToListAsync();
-        FilteredLessons = Lessons.Where(l => !l.Status).ToList();
-    }
-
     private void ShowInProgressLessons()
     {
         InProgressLessonsSelected = true;
         CompletedLessonsSelected = false;
-        FilteredLessons = Lessons.Where(l => !l.Status).ToList();
+        FilteredLessons = GetSequentialLessons(Lessons.Where(l => !l.Status).ToList());
     }
 
     private void ShowCompletedLessons()
