@@ -157,27 +157,29 @@
             .ToListAsync();
 
         FilteredLessons = GetSequentialLessons(Lessons);
+
+        ShowInProgressLessons();
     }
 
     private List<Users_Lesson> GetSequentialLessons(List<Users_Lesson> lessons)
     {
-        var filtered = new List<Users_Lesson>();
-        bool canAddNextLesson = true;
+        var orderedLessons = lessons.OrderBy(l => l.ID_LessonNavigation.Number).ToList();
+        var filteredLessons = new List<Users_Lesson>();
 
-        foreach (var lesson in lessons)
+        foreach (var lesson in orderedLessons)
         {
-            if (canAddNextLesson)
+            if (!lesson.Status)
             {
-                filtered.Add(lesson);
-                canAddNextLesson = lesson.Status;
+                filteredLessons.Add(lesson);
+                break;
             }
             else
             {
-                break;
+                filteredLessons.Add(lesson);
             }
         }
 
-        return filtered;
+        return filteredLessons;
     }
 
     private void ShowInProgressCourses()
