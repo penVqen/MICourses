@@ -92,7 +92,13 @@
                 .Include(ut => ut.ID_TestNavigation)
                 .Where(ut => ut.ID_User == currentUser.ID_User)
                 .ToListAsync();
-            FilteredTests = Tests.Where(t => t.Score == null).ToList(); // Default filter for in-progress tests
+
+            var completedLessons = await DbContext.Users_Lessons
+                .Where(ul => ul.ID_User == currentUser.ID_User && ul.Status)
+                .Select(ul => ul.ID_Lesson)
+                .ToListAsync();
+
+            FilteredTests = Tests.Where(t => completedLessons.Contains(t.ID_TestNavigation.ID_Lesson) && t.Score == null).ToList();
         }
         else
         {
@@ -106,7 +112,9 @@
         InProgressTestsSelected = true;
         CheckedTestsSelected = false;
         CompletedTestsSelected = false;
-        FilteredTests = Tests.Where(t => t.Score == null).ToList();
+
+        var completedLessons = Tests.Select(t => t.ID_TestNavigation.ID_Lesson).ToList();
+        FilteredTests = Tests.Where(t => completedLessons.Contains(t.ID_TestNavigation.ID_Lesson) && t.Score == null).ToList();
     }
 
     private void ShowCheckedTests()
@@ -114,7 +122,9 @@
         InProgressTestsSelected = false;
         CheckedTestsSelected = true;
         CompletedTestsSelected = false;
-        FilteredTests = Tests.Where(t => t.Score == 0).ToList();
+
+        var completedLessons = Tests.Select(t => t.ID_TestNavigation.ID_Lesson).ToList();
+        FilteredTests = Tests.Where(t => completedLessons.Contains(t.ID_TestNavigation.ID_Lesson) && t.Score == 0).ToList();
     }
 
     private void ShowCompletedTests()
@@ -122,7 +132,9 @@
         InProgressTestsSelected = false;
         CheckedTestsSelected = false;
         CompletedTestsSelected = true;
-        FilteredTests = Tests.Where(t => t.Score > 0).ToList();
+
+        var completedLessons = Tests.Select(t => t.ID_TestNavigation.ID_Lesson).ToList();
+        FilteredTests = Tests.Where(t => completedLessons.Contains(t.ID_TestNavigation.ID_Lesson) && t.Score > 0).ToList();
     }
 
     private void SelectTest(Users_Test test)
@@ -135,3 +147,4 @@
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
     }
 }
+
