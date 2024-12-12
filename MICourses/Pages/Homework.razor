@@ -59,12 +59,11 @@
                                     @userTest.ID_TestNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
-                                    <button style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                    <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
                                         Выбрать
                                     </button>
                                 </div>
                             </div>
-
                             <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
                                 Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
                             </div>
@@ -72,19 +71,11 @@
                     }
                 }
             </div>
-        </div>
-
     </div>
+</div>
 </div>
 
 @code {
-    private List<Users_Course> Courses;
-    private List<Users_Course> FilteredCourses;
-    private Users_Course SelectedCourse;
-
-    private List<Users_Lesson> Lessons;
-    private List<Users_Lesson> FilteredLessons;
-
     private List<Users_Test> Tests;
     private List<Users_Test> FilteredTests;
 
@@ -97,24 +88,14 @@
         var currentUser = CurrentUserService.GetCurrentUser();
         if (currentUser != null)
         {
-            Lessons = await DbContext.Users_Lessons
-                .Include(ul => ul.ID_LessonNavigation)
-                .Where(ul => ul.ID_User == currentUser.ID_User && ul.Status == true)
-                .ToListAsync();
-
-            var completedLessonIds = Lessons.Select(ul => ul.ID_Lesson).ToHashSet();
-
             Tests = await DbContext.Users_Tests
                 .Include(ut => ut.ID_TestNavigation)
-                .ThenInclude(t => t.ID_LessonNavigation)
-                .Where(ut => ut.ID_User == currentUser.ID_User && completedLessonIds.Contains(ut.ID_TestNavigation.ID_Lesson))
+                .Where(ut => ut.ID_User == currentUser.ID_User)
                 .ToListAsync();
-
-            FilteredTests = Tests.Where(t => t.Score == null).ToList();
+            FilteredTests = Tests.Where(t => t.Score == null).ToList(); // Default filter for in-progress tests
         }
         else
         {
-            Lessons = new List<Users_Lesson>();
             Tests = new List<Users_Test>();
             FilteredTests = Tests;
         }
