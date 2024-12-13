@@ -1,8 +1,16 @@
 ﻿@page "/test/{TestId:int}"
 @using MICourses.Models
 @inject MIContext DbContext
+@inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUserService
 
-<div class="w-4/5 mx-auto py-10 space-y-5">
+<div class="w-4/5 mx-auto py-10 space-y-5 relative">
+    <button @onclick="NavigateToHomework"
+            class="absolute text-gray-500 hover:text-gray-700 text-xl"
+            style="top: 20px; right: 20px; font-size: 60px;">
+        &times;
+    </button>
+
     <h1 class="text-2xl font-semibold text-gray-800">Тест: @TestModel?.Name</h1>
     @if (Questions == null || !Questions.Any())
     {
@@ -16,14 +24,17 @@
                 <h2 class="text-lg font-medium text-gray-700">@question.Text</h2>
                 @if (question.Answers.Count == 1)
                 {
-                    <input type="text" class="w-full border rounded-lg p-2 text-gray-700" placeholder="Ваш ответ">
+                    <input type="text" class="w-full border rounded-lg p-2 text-gray-700"
+                           placeholder="Ваш ответ"
+                           @oninput="(e) => HandleTextAnswerInput(question.ID_Question, e.Value)">
                 }
                 else
                 {
                     foreach (var answer in question.Answers)
                     {
                         <label class="flex items-center space-x-3">
-                            <input type="checkbox" class="form-checkbox text-purple-600">
+                            <input type="checkbox" class="form-checkbox text-purple-600"
+                                   @onchange="(e) => ToggleAnswer(question.ID_Question, answer.ID_Answer, e.Value)">
                             <span class="text-gray-700">@answer.Text</span>
                         </label>
                     }
@@ -31,8 +42,26 @@
             </div>
         }
     }
-    <button class="bg-purple-500 text-white rounded-lg px-6 py-2 hover:bg-purple-600">Отправить</button>
+    <button class="bg-purple-500 text-white rounded-lg px-6 py-2 hover:bg-purple-600"
+            @onclick="SubmitAnswers">
+        Проверить
+    </button>
 </div>
+
+@if (IsModalOpen)
+{
+    <div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-1/3">
+            <h3 class="text-lg font-semibold">@ModalMessage</h3>
+            <div class="flex justify-end gap-4 mt-6">
+                <button @onclick="CloseModal"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
@@ -40,6 +69,12 @@
 
     private MICourses.Models.Test TestModel;
     private List<Question> Questions;
+
+    private Dictionary<int, string> UserAnswers = new();
+    private Dictionary<int, List<int>> SelectedAnswers = new();
+
+    private bool IsModalOpen { get; set; } = false;
+    private string ModalMessage { get; set; } = string.Empty;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -49,5 +84,181 @@
             .FirstOrDefaultAsync(t => t.ID_Test == TestId);
 
         Questions = TestModel?.Questions.ToList();
+    }
+
+    private void NavigateToHomework()
+    {
+        NavigationManager.NavigateTo("/homework");
+    }
+
+    private void HandleTextAnswerInput(int questionId, object value)
+    {
+        if (value is string answer)
+        {
+            UserAnswers[questionId] = answer.Trim();
+        }
+    }
+
+    private void ToggleAnswer(int questionId, int answerId, object value)
+    {
+        if (!SelectedAnswers.ContainsKey(questionId))
+        {
+            SelectedAnswers[questionId] = new List<int>();
+        }
+
+        if (value is bool isSelected && isSelected)
+        {
+            SelectedAnswers[questionId].Add(answerId);
+        }
+        else
+        {
+            SelectedAnswers[questionId].Remove(answerId);
+        }
+    }
+
+    private async Task SubmitAnswers()
+    {
+        if (Questions == null || !Questions.Any())
+        {
+            ShowModal("Нет вопросов для проверки.");
+            return;
+        }
+
+        int correctAnswers = 0;
+
+        foreach (var question in Questions)
+        {
+            if (question.Answers.Count == 1)
+            {
+                if (UserAnswers.TryGetValue(question.ID_Question, out var userAnswer))
+                {
+                    var correctAnswer = question.Answers.FirstOrDefault(a => a.Correct);
+                    if (correctAnswer != null && string.Equals(correctAnswer.Text, userAnswer, StringComparison.OrdinalIgnoreCase))
+                    {
+                        correctAnswers++;
+                    }
+                }
+            }
+            else
+            {
+                if (SelectedAnswers.TryGetValue(question.ID_Question, out var selected))
+                {
+                    var correct = question.Answers.Where(a => a.Correct).Select(a => a.ID_Answer).ToList();
+                    if (correct.All(selected.Contains) && correct.Count == selected.Count)
+                    {
+                        correctAnswers++;
+                    }
+                }
+            }
+        }
+
+        int totalQuestions = Questions.Count;
+        double percentage = (double)correctAnswers / totalQuestions * 100;
+        int? score = null;
+
+        if (percentage >= 80) score = 5;
+        else if (percentage >= 60) score = 4;
+        else if (percentage >= 40) score = 3;
+
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser == null)
+        {
+            ShowModal("Не удалось определить текущего пользователя.");
+            return;
+        }
+
+        await UpdateUserTestScore(currentUser.ID_User, TestId, score);
+
+        if (TestModel?.IsFinal == true)
+        {
+            await UpdateUserCourseStatus(currentUser.ID_User);
+        }
+    }
+
+    private async Task UpdateUserTestScore(int userId, int testId, int? score)
+    {
+        var userTest = await DbContext.Users_Tests
+            .FirstOrDefaultAsync(ut => ut.ID_User == userId && ut.ID_Test == testId);
+
+        if (userTest == null)
+        {
+            ShowModal("Не удалось найти запись для обновления в таблице Users_Test.");
+            return;
+        }
+
+        userTest.Score = score;
+
+        try
+        {
+            DbContext.Users_Tests.Update(userTest);
+
+            if (score != null)
+            {
+                var user = await DbContext.Users.FirstOrDefaultAsync(u => u.ID_User == userId);
+                if (user != null)
+                {
+                    int bonus = TestModel?.IsFinal == true ? 152 : 52;
+                    user.Lvl += bonus;
+                    DbContext.Users.Update(user);
+                }
+            }
+
+            await DbContext.SaveChangesAsync();
+
+            ShowModal(score == null
+                ? "Вы не набрали минимальный балл для прохождения теста."
+                : $"Тест завершён. Ваша оценка: {score}.");
+        }
+        catch (Exception ex)
+        {
+            ShowModal($"Ошибка при сохранении данных: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateUserCourseStatus(int userId)
+    {
+        var courseId = await DbContext.Lessons
+            .Where(l => l.ID_Lesson == TestModel.ID_Lesson)
+            .Select(l => l.ID_Course)
+            .FirstOrDefaultAsync();
+
+        if (courseId == 0)
+        {
+            ShowModal("Не удалось найти курс, связанный с данным тестом.");
+            return;
+        }
+
+        var userCourse = await DbContext.Users_Courses
+            .FirstOrDefaultAsync(uc => uc.ID_User == userId && uc.ID_Course == courseId);
+
+        if (userCourse == null)
+        {
+            ShowModal("Не удалось найти запись пользователя в таблице Users_Course.");
+            return;
+        }
+
+        userCourse.Status = true;
+
+        try
+        {
+            DbContext.Users_Courses.Update(userCourse);
+            await DbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowModal($"Ошибка при обновлении статуса курса: {ex.Message}");
+        }
+    }
+
+    private void ShowModal(string message)
+    {
+        ModalMessage = message;
+        IsModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        IsModalOpen = false;
+        NavigationManager.NavigateTo("/homework");
     }
 }

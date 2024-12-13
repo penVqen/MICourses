@@ -14,6 +14,7 @@ builder.Services.AddDbContext<MIContext>(options =>
 builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<UserDataService>();
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
 
 var app = builder.Build();
 

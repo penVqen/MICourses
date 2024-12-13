@@ -30,16 +30,10 @@
 
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <div style="display: flex; gap: 10px; align-self: flex-start;">
-                <button @onclick="ShowInProgressTests"
-                        style="@GetButtonStyle(InProgressTestsSelected)">
+                <button @onclick="ShowInProgressTests" style="@GetButtonStyle(InProgressTestsSelected)">
                     Текущие тесты
                 </button>
-                <button @onclick="ShowCheckedTests"
-                        style="@GetButtonStyle(CheckedTestsSelected)">
-                    На проверке
-                </button>
-                <button @onclick="ShowCompletedTests"
-                        style="@GetButtonStyle(CompletedTestsSelected)">
+                <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
                     Завершённые тесты
                 </button>
             </div>
@@ -51,7 +45,7 @@
                 }
                 else
                 {
-                    foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.Name))
+                    foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.ID_LessonNavigation.Number))
                     {
                         <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
                             <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -59,9 +53,20 @@
                                     @userTest.ID_TestNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
-                                    <button @onclick="() => SelectTest(userTest)" style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                        Выбрать
-                                    </button>
+                                    @if (userTest.Score.HasValue)
+                                    {
+                                        <span style="background: #D1C4E9; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; margin-top: 30px; font-size: 14px;">
+                                            Оценка: @userTest.Score
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectTest(userTest)"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;"
+                                                disabled="@(!CanSelectTest(userTest))">
+                                            Выбрать
+                                        </button>
+                                    }
                                 </div>
                             </div>
                             <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
@@ -71,16 +76,16 @@
                     }
                 }
             </div>
+        </div>
     </div>
-</div>
 </div>
 
 @code {
     private List<Users_Test> Tests;
     private List<Users_Test> FilteredTests;
+    private Dictionary<int, int> LessonTestNumbers;
 
     private bool InProgressTestsSelected { get; set; } = true;
-    private bool CheckedTestsSelected { get; set; }
     private bool CompletedTestsSelected { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -90,9 +95,20 @@
         {
             Tests = await DbContext.Users_Tests
                 .Include(ut => ut.ID_TestNavigation)
+                .ThenInclude(t => t.ID_LessonNavigation)
                 .Where(ut => ut.ID_User == currentUser.ID_User)
                 .ToListAsync();
-            FilteredTests = Tests.Where(t => t.Score == null).ToList(); // Default filter for in-progress tests
+
+            LessonTestNumbers = await DbContext.Tests
+                .Include(t => t.ID_LessonNavigation)
+                .Where(t => Tests.Select(ut => ut.ID_Test).Contains(t.ID_Test))
+                .ToDictionaryAsync(t => t.ID_Test, t => t.ID_LessonNavigation.Number);
+
+            var completedLessons = await DbContext.Users_Lessons
+                .Where(ul => ul.ID_User == currentUser.ID_User && ul.Status)
+                .ToListAsync();
+
+            UpdateFilteredTests(completedLessons);
         }
         else
         {
@@ -101,28 +117,45 @@
         }
     }
 
+    private void UpdateFilteredTests(List<Users_Lesson> completedLessons)
+    {
+        var completedTestIds = Tests.Where(t => t.Score.HasValue).Select(t => t.ID_Test).ToHashSet();
+
+        FilteredTests = Tests.Where(t =>
+        {
+            var lessonNumber = LessonTestNumbers[t.ID_Test];
+            var requiredPreviousTestIds = LessonTestNumbers
+                .Where(kv => kv.Value < lessonNumber)
+                .Select(kv => kv.Key);
+
+            return requiredPreviousTestIds.All(completedTestIds.Contains) &&
+                   completedLessons.Any(cl => cl.ID_Lesson == t.ID_TestNavigation.ID_Lesson) &&
+                   (CompletedTestsSelected ? t.Score.HasValue : !t.Score.HasValue);
+        }).ToList();
+    }
+
     private void ShowInProgressTests()
     {
         InProgressTestsSelected = true;
-        CheckedTestsSelected = false;
         CompletedTestsSelected = false;
-        FilteredTests = Tests.Where(t => t.Score == null).ToList();
-    }
 
-    private void ShowCheckedTests()
-    {
-        InProgressTestsSelected = false;
-        CheckedTestsSelected = true;
-        CompletedTestsSelected = false;
-        FilteredTests = Tests.Where(t => t.Score == 0).ToList();
+        var completedLessons = DbContext.Users_Lessons
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.Status)
+            .ToList();
+
+        UpdateFilteredTests(completedLessons);
     }
 
     private void ShowCompletedTests()
     {
         InProgressTestsSelected = false;
-        CheckedTestsSelected = false;
         CompletedTestsSelected = true;
-        FilteredTests = Tests.Where(t => t.Score > 0).ToList();
+
+        var completedLessons = DbContext.Users_Lessons
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.Status)
+            .ToList();
+
+        UpdateFilteredTests(completedLessons);
     }
 
     private void SelectTest(Users_Test test)
@@ -130,8 +163,21 @@
         NavigationManager.NavigateTo($"/test/{test.ID_Test}");
     }
 
+    private bool CanSelectTest(Users_Test test)
+    {
+        var lessonNumber = LessonTestNumbers[test.ID_Test];
+        var completedTestIds = Tests.Where(t => t.Score.HasValue).Select(t => t.ID_Test).ToHashSet();
+
+        var requiredPreviousTestIds = LessonTestNumbers
+            .Where(kv => kv.Value < lessonNumber)
+            .Select(kv => kv.Key);
+
+        return requiredPreviousTestIds.All(completedTestIds.Contains);
+    }
+
     private string GetButtonStyle(bool isSelected)
     {
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
     }
+}
 }

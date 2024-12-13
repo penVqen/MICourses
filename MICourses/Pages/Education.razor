@@ -57,9 +57,21 @@
                                     @userCourse.ID_CourseNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
-                                    <button @onclick="() => SelectCourse(userCourse)" class="custom-button-hover" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                        Выбрать
-                                    </button>
+                                    @if (userCourse.Status)
+                                    {
+                                        <button class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Скачать сертификат
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectCourse(userCourse)"
+                                                class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Выбрать
+                                        </button>
+                                    }
                                 </div>
                             </div>
                         }
@@ -157,27 +169,29 @@
             .ToListAsync();
 
         FilteredLessons = GetSequentialLessons(Lessons);
+
+        ShowInProgressLessons();
     }
 
     private List<Users_Lesson> GetSequentialLessons(List<Users_Lesson> lessons)
     {
-        var filtered = new List<Users_Lesson>();
-        bool canAddNextLesson = true;
+        var orderedLessons = lessons.OrderBy(l => l.ID_LessonNavigation.Number).ToList();
+        var filteredLessons = new List<Users_Lesson>();
 
-        foreach (var lesson in lessons)
+        foreach (var lesson in orderedLessons)
         {
-            if (canAddNextLesson)
+            if (!lesson.Status)
             {
-                filtered.Add(lesson);
-                canAddNextLesson = lesson.Status;
+                filteredLessons.Add(lesson);
+                break;
             }
             else
             {
-                break;
+                filteredLessons.Add(lesson);
             }
         }
 
-        return filtered;
+        return filteredLessons;
     }
 
     private void ShowInProgressCourses()
