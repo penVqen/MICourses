@@ -44,7 +44,7 @@
     }
     <button class="bg-purple-500 text-white rounded-lg px-6 py-2 hover:bg-purple-600"
             @onclick="SubmitAnswers">
-        Отправить
+        Проверить
     </button>
 </div>
 
@@ -169,6 +169,11 @@
         }
 
         await UpdateUserTestScore(currentUser.ID_User, TestId, score);
+
+        if (TestModel?.IsFinal == true)
+        {
+            await UpdateUserCourseStatus(currentUser.ID_User);
+        }
     }
 
     private async Task UpdateUserTestScore(int userId, int testId, int? score)
@@ -198,6 +203,42 @@
         }
     }
 
+    private async Task UpdateUserCourseStatus(int userId)
+    {
+        // Получение ID_Course через ID_Lesson
+        var courseId = await DbContext.Lessons
+            .Where(l => l.ID_Lesson == TestModel.ID_Lesson)
+            .Select(l => l.ID_Course)
+            .FirstOrDefaultAsync();
+
+        if (courseId == 0)
+        {
+            ShowModal("Не удалось найти курс, связанный с данным тестом.");
+            return;
+        }
+
+        var userCourse = await DbContext.Users_Courses
+            .FirstOrDefaultAsync(uc => uc.ID_User == userId && uc.ID_Course == courseId);
+
+        if (userCourse == null)
+        {
+            ShowModal("Не удалось найти запись пользователя в таблице Users_Course.");
+            return;
+        }
+
+        userCourse.Status = true;
+
+        try
+        {
+            DbContext.Users_Courses.Update(userCourse);
+            await DbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowModal($"Ошибка при обновлении статуса курса: {ex.Message}");
+        }
+    }
+
     private void ShowModal(string message)
     {
         ModalMessage = message;
@@ -207,5 +248,6 @@
     private void CloseModal()
     {
         IsModalOpen = false;
+        NavigationManager.NavigateTo("/homework");
     }
 }

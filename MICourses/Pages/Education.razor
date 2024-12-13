@@ -57,9 +57,21 @@
                                     @userCourse.ID_CourseNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
-                                    <button @onclick="() => SelectCourse(userCourse)" class="custom-button-hover" style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                        Выбрать
-                                    </button>
+                                    @if (userCourse.Status)
+                                    {
+                                        <button class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Скачать сертификат
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectCourse(userCourse)"
+                                                class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Выбрать
+                                        </button>
+                                    }
                                 </div>
                             </div>
                         }
