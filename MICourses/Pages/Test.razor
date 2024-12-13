@@ -70,8 +70,8 @@
     private MICourses.Models.Test TestModel;
     private List<Question> Questions;
 
-    private Dictionary<int, string> UserAnswers = new(); // Для текстовых ответов
-    private Dictionary<int, List<int>> SelectedAnswers = new(); // Для чекбоксов
+    private Dictionary<int, string> UserAnswers = new();
+    private Dictionary<int, List<int>> SelectedAnswers = new();
 
     private bool IsModalOpen { get; set; } = false;
     private string ModalMessage { get; set; } = string.Empty;
@@ -128,7 +128,7 @@
 
         foreach (var question in Questions)
         {
-            if (question.Answers.Count == 1) // Текстовый вопрос
+            if (question.Answers.Count == 1)
             {
                 if (UserAnswers.TryGetValue(question.ID_Question, out var userAnswer))
                 {
@@ -139,7 +139,7 @@
                     }
                 }
             }
-            else // Вопрос с выбором
+            else
             {
                 if (SelectedAnswers.TryGetValue(question.ID_Question, out var selected))
                 {
@@ -152,7 +152,6 @@
             }
         }
 
-        // Подсчет оценки
         int totalQuestions = Questions.Count;
         double percentage = (double)correctAnswers / totalQuestions * 100;
         int? score = null;
@@ -192,7 +191,20 @@
         try
         {
             DbContext.Users_Tests.Update(userTest);
+
+            if (score != null)
+            {
+                var user = await DbContext.Users.FirstOrDefaultAsync(u => u.ID_User == userId);
+                if (user != null)
+                {
+                    int bonus = TestModel?.IsFinal == true ? 152 : 52;
+                    user.Lvl += bonus;
+                    DbContext.Users.Update(user);
+                }
+            }
+
             await DbContext.SaveChangesAsync();
+
             ShowModal(score == null
                 ? "Вы не набрали минимальный балл для прохождения теста."
                 : $"Тест завершён. Ваша оценка: {score}.");
@@ -205,7 +217,6 @@
 
     private async Task UpdateUserCourseStatus(int userId)
     {
-        // Получение ID_Course через ID_Lesson
         var courseId = await DbContext.Lessons
             .Where(l => l.ID_Lesson == TestModel.ID_Lesson)
             .Select(l => l.ID_Course)

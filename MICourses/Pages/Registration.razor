@@ -1,6 +1,7 @@
 ﻿@page "/registration"
 @inject UserDataService UserDataService
 @inject NavigationManager NavigationManager
+@inject IAchievementService AchievementService
 
 <div class="flex items-center justify-center h-screen">
     <div class="bg-white p-16 rounded shadow-md max-w-lg w-full">
@@ -142,6 +143,8 @@
         };
 
         await UserDataService.AddUserAsync(newUser);
+
+        await AchievementService.CheckAndAssignAchievements(newUser.ID_User);
 
         IsRegistrationSuccessful = true;
 

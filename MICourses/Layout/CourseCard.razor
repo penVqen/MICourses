@@ -83,7 +83,6 @@
             return;
         }
 
-        // Проверка, если пользователь уже записан на курс
         var existingEnrollment = await DbContext.Users_Courses
             .FirstOrDefaultAsync(uc => uc.ID_User == currentUser.ID_User && uc.ID_Course == Course.ID_Course);
 
@@ -93,7 +92,6 @@
             return;
         }
 
-        // Создание записи в Users_Course
         var userCourse = new Users_Course
             {
                 ID_User = currentUser.ID_User,
@@ -105,7 +103,6 @@
         DbContext.Users_Courses.Add(userCourse);
         await DbContext.SaveChangesAsync();
 
-        // Создание записей для уроков данного курса
         var lessons = await DbContext.Lessons
             .Where(l => l.ID_Course == Course.ID_Course)
             .ToListAsync();
@@ -116,12 +113,11 @@
                 {
                     ID_User = currentUser.ID_User,
                     ID_Lesson = lesson.ID_Lesson,
-                    Status = false, // Урок не пройден
+                    Status = false,
                 };
 
             DbContext.Users_Lessons.Add(userLesson);
 
-            // Получение всех тестов для данного урока
             var tests = await DbContext.Tests
                 .Where(t => t.ID_Lesson == lesson.ID_Lesson)
                 .ToListAsync();
@@ -132,15 +128,16 @@
                     {
                         ID_User = currentUser.ID_User,
                         ID_Test = test.ID_Test,
-                        Score = null // Тест не сдан
+                        Score = null
                     };
 
                 DbContext.Users_Tests.Add(userTest);
             }
         }
 
-        // Сохраняем все изменения в базе данных
         await DbContext.SaveChangesAsync();
+
+        ShowModal("Вы успешно подписались на курс!", CourseModalType.EnrollmentSuccess);
     }
 
 
