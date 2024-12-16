@@ -3,6 +3,7 @@
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUserService
+@inject CertificateService CertificateService
 
 <div class="w-4/5 mx-auto py-10 space-y-5 relative">
     <button @onclick="NavigateToHomework"
@@ -243,6 +244,23 @@
         {
             DbContext.Users_Courses.Update(userCourse);
             await DbContext.SaveChangesAsync();
+
+            var currentUser = CurrentUserService.GetCurrentUser();
+            if (currentUser != null)
+            {
+                string templatePath = Path.Combine("wwwroot", "Images", "sample.png");
+                string saveDirectory = Path.Combine("wwwroot", "Certificates");
+
+                CertificateService.GenerateAndSaveCertificate(
+                    userId: currentUser.ID_User,
+                    courseId: courseId,
+                    templatePath: templatePath,
+                    saveDirectory: saveDirectory,
+                    context: DbContext
+                );
+
+                ShowModal("Курс успешно пройден!");
+            }
         }
         catch (Exception ex)
         {
