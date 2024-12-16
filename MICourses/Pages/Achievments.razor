@@ -97,6 +97,13 @@
 
     private async Task LoadAchievements()
     {
-        Achievements = await DbContext.Achievments.ToListAsync();
+        if (User == null)
+            return;
+
+        Achievements = await DbContext.Users_Achievments
+            .Where(ua => ua.ID_User == User.ID_User)
+            .Select(ua => ua.ID_AchievmentNavigation)
+            .ToListAsync();
     }
+
 }
