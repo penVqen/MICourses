@@ -237,18 +237,60 @@
             return;
         }
 
-        userCourse.Status = true;
+        if (!userCourse.Status) // Только если это первый раз завершен курс
+        {
+            userCourse.Status = true;
 
-        try
-        {
-            DbContext.Users_Courses.Update(userCourse);
-            await DbContext.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            ShowModal($"Ошибка при обновлении статуса курса: {ex.Message}");
+            // Проверяем, есть ли достижение "Первый курс"
+            const int firstCourseAchievementId = 2; // ID достижения "Первый курс"
+            var existingFirstCourseAchievement = await DbContext.Users_Achievments
+                .FirstOrDefaultAsync(ua => ua.ID_User == userId && ua.ID_Achievment == firstCourseAchievementId);
+
+            if (existingFirstCourseAchievement == null)
+            {
+                var newFirstCourseAchievement = new Users_Achievment
+                    {
+                        ID_User = userId,
+                        ID_Achievment = firstCourseAchievementId
+                    };
+                await DbContext.Users_Achievments.AddAsync(newFirstCourseAchievement);
+            }
+
+            // Проверяем количество завершенных курсов
+            var completedCoursesCount = await DbContext.Users_Courses
+                .Where(uc => uc.ID_User == userId && uc.Status)
+                .CountAsync();
+
+            if (completedCoursesCount >= 3) // Если 3 или более курсов завершено
+            {
+                const int threeCoursesAchievementId = 3; // ID достижения за 3 курса
+                var existingThreeCoursesAchievement = await DbContext.Users_Achievments
+                    .FirstOrDefaultAsync(ua => ua.ID_User == userId && ua.ID_Achievment == threeCoursesAchievementId);
+
+                if (existingThreeCoursesAchievement == null)
+                {
+                    var newThreeCoursesAchievement = new Users_Achievment
+                        {
+                            ID_User = userId,
+                            ID_Achievment = threeCoursesAchievementId
+                        };
+                    await DbContext.Users_Achievments.AddAsync(newThreeCoursesAchievement);
+                }
+            }
+
+            try
+            {
+                DbContext.Users_Courses.Update(userCourse);
+                await DbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                ShowModal($"Ошибка при обновлении статуса курса: {ex.Message}");
+            }
         }
     }
+
+
 
     private void ShowModal(string message)
     {
