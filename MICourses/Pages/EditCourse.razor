@@ -1,4 +1,4 @@
-﻿@page "/create-course"
+﻿@page "/edit-course/{courseId:int}"
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUserService
@@ -11,7 +11,7 @@
     </button>
 
     <h2 class="text-lg font-semibold text-gray-800" style="font-size: 50px; margin-bottom: 40px;">
-        Создание курса
+        Редактирование курса
     </h2>
 
     <div style="margin-bottom: 20px;">
@@ -56,8 +56,8 @@
         </div>
     </div>
 
-    <button @onclick="CreatesCourse" class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
-        Создать курс
+    <button @onclick="SaveChanges" class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
+        Сохранить изменения
     </button>
 </div>
 
@@ -77,13 +77,15 @@
 }
 
 @code {
+    [Parameter]
+    public int CourseId { get; set; }
+
     private string CourseName;
     private string CourseDescription;
     private int StudyPeriod;
     private string SelectedLanguage;
-    private bool? ForBeginners;
+    private bool ForBeginners;
     private List<string> ExistingLanguages = new();
-
     private bool IsModalOpen = false;
     private string ModalMessage = string.Empty;
 
@@ -93,6 +95,21 @@
             .Select(c => c.Language)
             .Distinct()
             .ToListAsync();
+
+        var course = await DbContext.Courses.FindAsync(CourseId);
+
+        if (course == null)
+        {
+            ModalMessage = "Курс не найден.";
+            IsModalOpen = true;
+            return;
+        }
+
+        CourseName = course.Name;
+        CourseDescription = course.Description;
+        StudyPeriod = int.Parse(course.StudyPeriod.Split(' ')[0]);
+        SelectedLanguage = course.Language;
+        ForBeginners = course.ForBeginners;
     }
 
     private void CloseModal()
@@ -100,70 +117,52 @@
         IsModalOpen = false;
     }
 
-    private async Task CreatesCourse()
+    private async Task SaveChanges()
     {
         if (string.IsNullOrWhiteSpace(CourseName))
         {
-            ModalMessage = "Вы не ввели название курса";
+            ModalMessage = "Вы не ввели название курса.";
             IsModalOpen = true;
             return;
         }
 
         if (string.IsNullOrWhiteSpace(CourseDescription))
         {
-            ModalMessage = "Вы не ввели описание курса";
+            ModalMessage = "Вы не ввели описание курса.";
             IsModalOpen = true;
             return;
         }
 
         if (StudyPeriod < 5)
         {
-            ModalMessage = "Период обучения не может быть меньше 5 недель";
+            ModalMessage = "Период обучения не может быть меньше 5 недель.";
             IsModalOpen = true;
             return;
         }
 
         if (string.IsNullOrEmpty(SelectedLanguage))
         {
-            ModalMessage = "Вы не выбрали язык курса";
+            ModalMessage = "Вы не выбрали язык курса.";
             IsModalOpen = true;
             return;
         }
 
-        if (ForBeginners == null)
+        var course = await DbContext.Courses.FindAsync(CourseId);
+
+        if (course == null)
         {
-            ModalMessage = "Вы не выбрали тип курса";
+            ModalMessage = "Курс не найден.";
             IsModalOpen = true;
             return;
         }
 
-        var newCourse = new Course
-            {
-                Name = CourseName,
-                Description = CourseDescription,
-                StudyPeriod = StudyPeriod + " недель",
-                Language = SelectedLanguage,
-                ForBeginners = ForBeginners.Value
-            };
+        course.Name = CourseName;
+        course.Description = CourseDescription;
+        course.StudyPeriod = StudyPeriod + " недель";
+        course.Language = SelectedLanguage;
+        course.ForBeginners = ForBeginners;
 
-        DbContext.Courses.Add(newCourse);
         await DbContext.SaveChangesAsync();
-
-        var currentUser = CurrentUserService.GetCurrentUser();
-
-        if (currentUser != null)
-        {
-            var usersCourse = new Users_Course
-                {
-                    ID_User = currentUser.ID_User,
-                    ID_Course = newCourse.ID_Course,
-                    Status = false,
-                    Author = true
-                };
-
-            DbContext.Users_Courses.Add(usersCourse);
-            await DbContext.SaveChangesAsync();
-        }
 
         NavigationManager.NavigateTo("/education");
     }
@@ -173,4 +172,4 @@
         NavigationManager.NavigateTo("/education");
     }
 }
-
+z

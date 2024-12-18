@@ -71,6 +71,14 @@
                                     @userCourse.ID_CourseNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
+                                                @if (MyCoursesSelected)
+                                    {
+                                        <button @onclick="() => EditCourse(userCourse)"
+                                                class="custom-button-hover"
+                                                style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
+                                            Редактировать
+                                        </button>
+                                    }
                                     @if (userCourse.Status)
                                     {
                                         <button @onclick="() => DownloadCertificate(userCourse)"
@@ -78,7 +86,6 @@
                                                 style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
                                             Скачать сертификат
                                         </button>
-
                                     }
                                     else
                                     {
@@ -137,6 +144,14 @@
                                                 style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
                                             Перейти
                                         </button>
+                                        @if (MyCoursesSelected)
+                                        {
+                                            <button @onclick="() => EditLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
+                                                    class="custom-button-hover"
+                                                    style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
+                                                Редактировать
+                                            </button>
+                                        }
                                     </div>
                                 </div>
                             }
@@ -274,6 +289,16 @@
         NavigationManager.NavigateTo($"/create-lesson/{CourseId}");
     }
 
+    private void EditCourse(Users_Course userCourse)
+    {
+        NavigationManager.NavigateTo($"/edit-course/{userCourse.ID_Course}");
+    }
+
+    private void EditLesson(int lessonId)
+    {
+        NavigationManager.NavigateTo($"/edit-lesson/{lessonId}");
+    }
+
     private string GetButtonStyle(bool isSelected)
     {
         return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
@@ -314,7 +339,6 @@
         float startY = 270;
         float lineSpacing = 50;
 
-            // Выводим все строки с отступами и линиями
             DrawText(canvas, "Настоящий сертификат подтверждает, что", startX, startY, SKTextAlign.Left, font, paint);
             DrawText(canvas, userName, startX, startY + lineSpacing, SKTextAlign.Left, font, paint);
             canvas.DrawLine(startX, startY + lineSpacing + 5, startX + 400, startY + lineSpacing + 5, paint);
@@ -327,13 +351,11 @@
             DrawText(canvas, completionDate, startX, startY + lineSpacing * 5, SKTextAlign.Left, font, paint);
             canvas.DrawLine(startX, startY + lineSpacing * 5 + 5, startX + 200, startY + lineSpacing * 5 + 5, paint);
 
-            // Для преподавателя добавляем дополнительный отступ по оси X
             float teacherOffsetX = startX + 290;
             DrawText(canvas, "Преподаватель курса", teacherOffsetX, startY + lineSpacing * 4, SKTextAlign.Left, font, paint);
             DrawText(canvas, teacherName, teacherOffsetX, startY + lineSpacing * 5, SKTextAlign.Left, font, paint);
             canvas.DrawLine(teacherOffsetX, startY + lineSpacing * 5 + 5, teacherOffsetX + 200, startY + lineSpacing * 5 + 5, paint);
 
-            // Сохраняем файл в потоке памяти
             using (var ms = new MemoryStream())
             {
                 bitmap.Encode(ms, SKEncodedImageFormat.Png, 100);
@@ -344,7 +366,6 @@
         }
     }
 
-    // Метод должен быть теперь вне DownloadCertificate:
     private void DrawText(SKCanvas canvas, string text, float x, float y, SKTextAlign textAlign, SKFont font, SKPaint paint)
     {
         paint.TextAlign = textAlign;

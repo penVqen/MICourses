@@ -1,7 +1,7 @@
 ﻿@page "/create-test"
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
-@inject CurrentUserService CurrentUserService  // Внедряем сервис для текущего пользователя
+@inject CurrentUserService CurrentUserService
 @using System.Linq
 @using Microsoft.AspNetCore.Components.Authorization
 
@@ -16,7 +16,6 @@
         Создание теста
     </h2>
 
-    <!-- Выбор курса -->
     <div style="margin-bottom: 20px;">
         <label class="block text-gray-700 text-lg font-medium">Курс:</label>
         <select @onchange="LoadLessonsForCourse" class="border rounded w-full py-2 px-3 text-gray-700">
@@ -28,8 +27,7 @@
         </select>
     </div>
 
-    <!-- Выбор урока (отображается только после выбора курса) -->
-    @if (SelectedCourse != null && LessonsForSelectedCourse.Any())
+    @if (SelectedCourse != null)
     {
         <div style="margin-bottom: 20px;">
             <label class="block text-gray-700 text-lg font-medium">Урок:</label>
@@ -43,7 +41,6 @@
         </div>
     }
 
-    <!-- Название теста (отображается только после выбора урока) -->
     @if (SelectedLesson != null)
     {
         <div style="margin-bottom: 20px;">
@@ -51,22 +48,18 @@
             <input id="testName" type="text" @bind="TestName" class="border rounded w-full py-2 px-3 text-gray-700" />
         </div>
 
-        <!-- Описание теста -->
         <div style="margin-bottom: 20px;">
             <label for="testDescription" class="block text-gray-700 text-lg font-medium">Описание теста:</label>
             <textarea id="testDescription" @bind="TestDescription" class="border rounded w-full py-2 px-3 text-gray-700" rows="4"></textarea>
         </div>
 
         <div style="margin-bottom: 20px;">
-            <div class="flex gap-4">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" class="form-checkbox" @bind="IsFinal" />
-                    <span class="ml-2">Итоговый тест</span>
-                </label>
-            </div>
+            <label class="inline-flex items-center">
+                <input type="checkbox" class="form-checkbox" @bind="IsFinal" />
+                <span class="ml-2">Итоговый тест</span>
+            </label>
         </div>
 
-        <!-- Создание вопроса -->
         <div style="margin-bottom: 40px;">
             <h3 class="text-xl font-semibold text-gray-800">Создание Вопроса</h3>
 
@@ -79,26 +72,41 @@
                 Добавить вопрос
             </button>
 
-            <!-- Список вопросов -->
-            @foreach (var question in Questions)
+            @if (Questions.Any())
             {
-                <div class="mt-4">
-                    <h4 class="text-lg font-semibold">Ответы для вопроса: @question.Text</h4>
+                <div>
+                    @foreach (var question in Questions)
+                    {
+                        <div class="mt-4 p-4 border rounded">
+                            <h4 class="text-lg font-semibold">Вопрос: @question.Text</h4>
 
-                    <!-- Поля для ввода ответов -->
-                    <div style="margin-bottom: 20px;">
-                        <label for="answerText" class="block text-gray-700 text-lg font-medium">Текст ответа:</label>
-                        <input id="answerText" type="text" @bind="AnswerText" class="border rounded w-full py-2 px-3 text-gray-700" />
-                    </div>
+                            <div style="margin-bottom: 20px;">
+                                <label for="answerText" class="block text-gray-700 text-lg font-medium">Текст ответа:</label>
+                                <input id="answerText" type="text" @bind="AnswerText" class="border rounded w-full py-2 px-3 text-gray-700" />
+                            </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" class="form-checkbox" @bind="IsCorrect" />
-                            <span class="ml-2">Правильный ответ</span>
-                        </label>
-                    </div>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" class="form-checkbox" @bind="IsCorrect" />
+                                <span class="ml-2">Правильный ответ</span>
+                            </label>
 
-                    <button @onclick="AddQuestion" class="btn btn-primary">Добавить вопрос</button>
+                            <button @onclick="() => AddAnswer()" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+                                Добавить ответ
+                            </button>
+
+                            <ul>
+                                @foreach (var answer in AnswersForCurrentQuestion.Where(a => a.ID_Question == CurrentQuestionId))
+                                {
+                                    <li>
+                                        @answer.Text (@(answer.Correct ? "Правильный" : "Неправильный"))
+                                        <button @onclick="() => RemoveAnswer(answer)" class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600">
+                                            Удалить
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
                 </div>
             }
         </div>
@@ -128,26 +136,24 @@
     private string TestName;
     private string TestDescription;
     private bool? IsFinal = false;
-    private string QuestionText; // Для ввода текста вопроса
-    private string AnswerText;   // Для ввода текста ответа
-    private bool IsCorrect;      // Для отметки правильного ответа
-    private List<MICourses.Models.Question> Questions = new List<MICourses.Models.Question>(); // Список вопросов для текущего теста
-    private List<MICourses.Models.Answer> AnswersForCurrentQuestion = new List<MICourses.Models.Answer>(); // Список ответов для текущего вопроса
-
+    private string QuestionText;
+    private string AnswerText;
+    private bool IsCorrect;
+    private int? CurrentQuestionId;
+    private List<MICourses.Models.Question> Questions = new();
+    private List<MICourses.Models.Answer> AnswersForCurrentQuestion = new();
     private List<MICourses.Models.Course> ExistingCourses = new();
     private List<MICourses.Models.Lesson> LessonsForSelectedCourse = new();
     private int? SelectedCourse { get; set; }
     private int? SelectedLesson { get; set; }
-
     private bool IsModalOpen = false;
     private string ModalMessage = string.Empty;
-
     private User currentUser;
+    private int? CurrentTestId;
 
     protected override async Task OnInitializedAsync()
     {
         currentUser = CurrentUserService.GetCurrentUser();
-
         if (currentUser != null)
         {
             ExistingCourses = await DbContext.Users_Courses
@@ -165,26 +171,23 @@
     private async Task LoadLessonsForCourse(ChangeEventArgs e)
     {
         SelectedLesson = null;
-
+        LessonsForSelectedCourse.Clear();
         if (e.Value != null)
         {
-            int courseId = Convert.ToInt32(e.Value);
-            LessonsForSelectedCourse = await DbContext.Lessons.Where(l => l.ID_Course == courseId).ToListAsync();
-            SelectedCourse = courseId;
+            SelectedCourse = int.Parse(e.Value.ToString());
+            LessonsForSelectedCourse = await DbContext.Lessons
+                .Where(l => l.ID_Course == SelectedCourse)
+                .ToListAsync();
         }
         else
         {
-            LessonsForSelectedCourse.Clear();
             SelectedCourse = null;
         }
     }
 
-    private void CloseModal()
-    {
-        IsModalOpen = false;
-    }
+    private void CloseModal() => IsModalOpen = false;
 
-    private void AddQuestion()
+    private async Task AddQuestion()
     {
         if (string.IsNullOrWhiteSpace(QuestionText))
         {
@@ -193,20 +196,27 @@
             return;
         }
 
-        // Создаем новый вопрос
-        var newQuestion = new MICourses.Models.Question
-            {
-                Text = QuestionText,
-                ID_Test = SelectedLesson.Value // Привязываем вопрос к тесту
-            };
+        var newQuestion = new MICourses.Models.Question { Text = QuestionText };
 
-        // Добавляем вопрос в список вопросов
+        DbContext.Questions.Add(newQuestion);
+        await DbContext.SaveChangesAsync();
+
+        CurrentQuestionId = newQuestion.ID_Question;
+
         Questions.Add(newQuestion);
-        QuestionText = string.Empty; // Очищаем поле ввода вопроса
+
+        QuestionText = string.Empty;
     }
 
-    private void AddAnswerToQuestion(MICourses.Models.Question question)
+    private async Task AddAnswer()
     {
+        if (CurrentQuestionId == null)
+        {
+            ModalMessage = "Сначала добавьте вопрос";
+            IsModalOpen = true;
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(AnswerText))
         {
             ModalMessage = "Текст ответа не может быть пустым";
@@ -218,41 +228,26 @@
             {
                 Text = AnswerText,
                 Correct = IsCorrect,
-                ID_Question = question.ID_Question // Связываем ответ с вопросом
+                ID_Question = CurrentQuestionId.Value
             };
 
-        // Добавляем ответ в список ответов для текущего вопроса
-        AnswersForCurrentQuestion.Add(newAnswer);
-        AnswerText = string.Empty; // Очищаем поле ввода ответа
-        IsCorrect = false; // Сбрасываем флаг правильности
+        DbContext.Answers.Add(newAnswer);
+        await DbContext.SaveChangesAsync();
+
+        AnswerText = string.Empty;
+        IsCorrect = false;
+    }
+
+    private void RemoveAnswer(MICourses.Models.Answer answer)
+    {
+        AnswersForCurrentQuestion.Remove(answer);
     }
 
     private async Task CreatesTest()
     {
-        if (string.IsNullOrWhiteSpace(TestName))
+        if (string.IsNullOrWhiteSpace(TestName) || string.IsNullOrWhiteSpace(TestDescription) || SelectedCourse == null || SelectedLesson == null)
         {
-            ModalMessage = "Вы не ввели название теста";
-            IsModalOpen = true;
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(TestDescription))
-        {
-            ModalMessage = "Вы не ввели описание теста";
-            IsModalOpen = true;
-            return;
-        }
-
-        if (SelectedCourse == null)
-        {
-            ModalMessage = "Вы не выбрали курс";
-            IsModalOpen = true;
-            return;
-        }
-
-        if (SelectedLesson == null)
-        {
-            ModalMessage = "Вы не выбрали урок";
+            ModalMessage = "Заполните все поля";
             IsModalOpen = true;
             return;
         }
@@ -268,27 +263,28 @@
         DbContext.Tests.Add(newTest);
         await DbContext.SaveChangesAsync();
 
-        // Добавляем все вопросы
+        CurrentTestId = newTest.ID_Test;
+
+     
         foreach (var question in Questions)
         {
-            question.ID_Test = newTest.ID_Test; // Привязываем вопрос к тесту
+            
+            question.ID_Test = CurrentTestId.Value;
             DbContext.Questions.Add(question);
 
-            // Добавляем ответы для каждого вопроса
-            foreach (var answer in AnswersForCurrentQuestion)
+           
+            foreach (var answer in AnswersForCurrentQuestion.Where(a => a.ID_Question == question.ID_Question))
             {
-                answer.ID_Question = question.ID_Question; // Привязываем ответ к вопросу
+                answer.ID_Question = question.ID_Question; 
                 DbContext.Answers.Add(answer);
             }
         }
 
-        await DbContext.SaveChangesAsync(); // Сохраняем изменения
+        await DbContext.SaveChangesAsync();
 
         NavigationManager.NavigateTo("/education");
     }
 
-    void NavigateToEducation()
-    {
-        NavigationManager.NavigateTo("/education");
-    }
+    private void NavigateToEducation() => NavigationManager.NavigateTo("/education");
 }
+
