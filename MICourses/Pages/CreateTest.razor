@@ -1,0 +1,167 @@
+﻿@page "/create-test"
+@inject MIContext DbContext
+@inject NavigationManager NavigationManager
+@using System.Linq
+
+<div class="container relative" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 50px; min-height: 100vh;">
+    <button @onclick="NavigateToEducation"
+            class="absolute text-gray-500 hover:text-gray-700 text-xl"
+            style="top: 20px; right: 20px; font-size: 60px;">
+        &times;
+    </button>
+
+    <h2 class="text-lg font-semibold text-gray-800" style="font-size: 50px; margin-bottom: 40px;">
+        Создание теста
+    </h2>
+
+    <!-- Выбор курса -->
+    <div style="margin-bottom: 20px;">
+        <label class="block text-gray-700 text-lg font-medium">Курс:</label>
+        <select @onchange="LoadLessonsForCourse" class="border rounded w-full py-2 px-3 text-gray-700">
+            <option value="" disabled selected>Выберите курс</option>
+            @foreach (var course in ExistingCourses)
+            {
+                <option value="@course.ID_Course">@course.Name</option>
+            }
+        </select>
+    </div>
+
+    <!-- Выбор урока (отображается только после выбора курса) -->
+    @if (SelectedCourse != null && LessonsForSelectedCourse.Any())
+    {
+        <div style="margin-bottom: 20px;">
+            <label class="block text-gray-700 text-lg font-medium">Урок:</label>
+            <select @bind="SelectedLesson" class="border rounded w-full py-2 px-3 text-gray-700">
+                <option value="" disabled selected>Выберите урок</option>
+                @foreach (var lesson in LessonsForSelectedCourse)
+                {
+                    <option value="@lesson.ID_Lesson">@lesson.Name</option>
+                }
+            </select>
+        </div>
+    }
+
+    <!-- Название теста (отображается только после выбора урока) -->
+    @if (SelectedLesson != null)
+    {
+        <div style="margin-bottom: 20px;">
+            <label for="testName" class="block text-gray-700 text-lg font-medium">Название теста:</label>
+            <input id="testName" type="text" @bind="TestName" class="border rounded w-full py-2 px-3 text-gray-700" />
+        </div>
+
+        <!-- Описание теста -->
+        <div style="margin-bottom: 20px;">
+            <label for="testDescription" class="block text-gray-700 text-lg font-medium">Описание теста:</label>
+            <textarea id="testDescription" @bind="TestDescription" class="border rounded w-full py-2 px-3 text-gray-700" rows="4"></textarea>
+        </div>
+
+        <button @onclick="CreatesTest" class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
+            Создать тест
+        </button>
+    }
+</div>
+
+@if (IsModalOpen)
+{
+    <div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-1/3">
+            <h3 class="text-lg font-semibold">@ModalMessage</h3>
+            <div class="flex justify-end gap-4 mt-6">
+                <button @onclick="CloseModal"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string TestName;
+    private string TestDescription;
+    private bool? IsFinal = false;
+    private bool ForBeginners = true;
+    private List<MICourses.Models.Course> ExistingCourses = new();
+    private List<MICourses.Models.Lesson> LessonsForSelectedCourse = new();
+    private int? SelectedCourse { get; set; }
+    private int? SelectedLesson { get; set; }
+
+    private bool IsModalOpen = false;
+    private string ModalMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ExistingCourses = await DbContext.Courses.ToListAsync();
+    }
+
+    private async Task LoadLessonsForCourse(ChangeEventArgs e)
+    {
+        SelectedLesson = null; // Сбрасываем выбор урока
+
+        if (e.Value != null)
+        {
+            int courseId = Convert.ToInt32(e.Value);
+            LessonsForSelectedCourse = await DbContext.Lessons.Where(l => l.ID_Course == courseId).ToListAsync();
+            SelectedCourse = courseId;  // Привязываем выбранный курс
+        }
+        else
+        {
+            LessonsForSelectedCourse.Clear();  // Очищаем список уроков, если курс не выбран
+            SelectedCourse = null;
+        }
+    }
+
+    private void CloseModal()
+    {
+        IsModalOpen = false;
+    }
+
+    private async Task CreatesTest()
+    {
+        if (string.IsNullOrWhiteSpace(TestName))
+        {
+            ModalMessage = "Вы не ввели название теста";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(TestDescription))
+        {
+            ModalMessage = "Вы не ввели описание теста";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (SelectedCourse == null)
+        {
+            ModalMessage = "Вы не выбрали курс";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (SelectedLesson == null)
+        {
+            ModalMessage = "Вы не выбрали урок";
+            IsModalOpen = true;
+            return;
+        }
+
+        var newTest = new MICourses.Models.Test
+            {
+                Name = TestName,
+                Description = TestDescription,
+                IsFinal = IsFinal,
+                ID_Lesson = SelectedLesson.Value
+            };
+
+        DbContext.Tests.Add(newTest);
+        await DbContext.SaveChangesAsync();
+
+        NavigationManager.NavigateTo("/education");
+    }
+
+    void NavigateToEducation()
+    {
+        NavigationManager.NavigateTo("/education");
+    }
+}

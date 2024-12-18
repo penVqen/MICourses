@@ -30,16 +30,27 @@
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
             <h3 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Курсы:</h3>
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button @onclick="ShowInProgressCourses"
-                            class="custom-button-hover"
-                            style="@GetButtonStyle(InProgressCoursesSelected)">
-                        В процессе
-                    </button>
-                    <button @onclick="ShowCompletedCourses"
-                            class="custom-button-hover"
-                            style="@GetButtonStyle(CompletedCoursesSelected)">
-                        Пройденные
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; position: relative;">
+                    <div style="display: flex; gap: 10px;">
+                        <button @onclick="ShowInProgressCourses"
+                                class="custom-button-hover"
+                                style="@GetButtonStyle(InProgressCoursesSelected)">
+                            В процессе
+                        </button>
+                        <button @onclick="ShowCompletedCourses"
+                                class="custom-button-hover"
+                                style="@GetButtonStyle(CompletedCoursesSelected)">
+                            Пройденные
+                        </button>
+                        <button @onclick="ShowMyCourses"
+                                class="custom-button-hover"
+                                style="@GetButtonStyle(MyCoursesSelected)">
+                            Мои
+                        </button>
+                    </div>
+                    <button @onclick="CreateCourse"
+                            style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                        Создать курс
                     </button>
                 </div>
 
@@ -85,7 +96,7 @@
             <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
                 <h3 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Уроки:</h3>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; position: relative;">
                         <button @onclick="ShowInProgressLessons"
                                 class="custom-button-hover"
                                 style="@GetButtonStyle(InProgressLessonsSelected)">
@@ -95,6 +106,10 @@
                                 class="custom-button-hover"
                                 style="@GetButtonStyle(CompletedLessonsSelected)">
                             Пройденные
+                        </button>
+                        <button @onclick="CreateLesson"
+                                style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                            Добавить урок
                         </button>
                     </div>
 
@@ -129,6 +144,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public int CourseId { get; set; }
+
     private List<Users_Course> Courses;
     private List<Users_Course> FilteredCourses;
     private Users_Course SelectedCourse;
@@ -140,6 +158,7 @@
     private bool CompletedCoursesSelected { get; set; }
     private bool InProgressLessonsSelected { get; set; } = true;
     private bool CompletedLessonsSelected { get; set; }
+    private bool MyCoursesSelected { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,6 +181,7 @@
     private async Task SelectCourse(Users_Course course)
     {
         SelectedCourse = course;
+        CourseId = course.ID_Course;
         Lessons = await DbContext.Users_Lessons
             .Include(ul => ul.ID_LessonNavigation)
             .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
@@ -199,12 +219,14 @@
         InProgressCoursesSelected = true;
         CompletedCoursesSelected = false;
         FilteredCourses = Courses.Where(c => !c.Status).ToList();
+        MyCoursesSelected = false;
     }
 
     private void ShowCompletedCourses()
     {
         InProgressCoursesSelected = false;
         CompletedCoursesSelected = true;
+        MyCoursesSelected = false;
         FilteredCourses = Courses.Where(c => c.Status).ToList();
     }
 
@@ -222,9 +244,29 @@
         FilteredLessons = Lessons.Where(l => l.Status).ToList();
     }
 
+    private void ShowMyCourses()
+    {
+        InProgressCoursesSelected = false;
+        CompletedCoursesSelected = false;
+        MyCoursesSelected = true;
+        FilteredCourses = Courses.Where(c => c.Author).ToList();
+    }
+
     private void NavigateToLesson(int lessonId)
     {
         NavigationManager.NavigateTo($"/lesson/{lessonId}");
+    }
+
+    private void CreateCourse()
+    {
+        NavigationManager.NavigateTo("/create-course");
+    }
+
+    private void CreateLesson()
+    {
+        Console.WriteLine($"CourseId: {CourseId}");
+
+        NavigationManager.NavigateTo($"/create-lesson/{CourseId}");
     }
 
     private string GetButtonStyle(bool isSelected)
