@@ -301,27 +301,27 @@
             using var bitmap = SKBitmap.Decode("wwwroot/Images/sample.png");
             using var canvas = new SKCanvas(bitmap);
 
-            var paint = new SKPaint
-                {
-                    TextSize = 14,
-                    IsAntialias = true,
-                    Color = SKColors.Black,
-                    Typeface = SKTypeface.FromFamilyName("Arial")
-                };
+        var paint = new SKPaint
+            {
+                TextSize = 14,
+                IsAntialias = true,
+                Color = SKColors.Black,
+                Typeface = SKTypeface.FromFamilyName("Arial")
+            };
 
-            var font = new SKFont(paint.Typeface, 14);
-            float startX = 350;
-            float startY = 270;
-            float lineSpacing = 50;
+        var font = new SKFont(paint.Typeface, 14);
+        float startX = 350;
+        float startY = 270;
+        float lineSpacing = 50;
 
             // Выводим все строки с отступами и линиями
             DrawText(canvas, "Настоящий сертификат подтверждает, что", startX, startY, SKTextAlign.Left, font, paint);
             DrawText(canvas, userName, startX, startY + lineSpacing, SKTextAlign.Left, font, paint);
             canvas.DrawLine(startX, startY + lineSpacing + 5, startX + 400, startY + lineSpacing + 5, paint);
 
-            DrawText(canvas, "Успешно прошел обучение на курсе", startX, startY + lineSpacing * 2, SKTextAlign.Left, font, paint);
-            DrawText(canvas, course.Name, startX, startY + lineSpacing * 3, SKTextAlign.Left, font, paint);
-            canvas.DrawLine(startX, startY + lineSpacing * 3 + 5, startX + 400, startY + lineSpacing * 3 + 5, paint);
+        DrawText(canvas, "Успешно прошел обучение на курсе", startX, startY + lineSpacing * 2, SKTextAlign.Left, font, paint);
+        DrawText(canvas, course.Name, startX, startY + lineSpacing * 3, SKTextAlign.Left, font, paint);
+        canvas.DrawLine(startX, startY + lineSpacing * 3 + 5, startX + 400, startY + lineSpacing * 3 + 5, paint);
 
             DrawText(canvas, "Дата", startX, startY + lineSpacing * 4, SKTextAlign.Left, font, paint);
             DrawText(canvas, completionDate, startX, startY + lineSpacing * 5, SKTextAlign.Left, font, paint);

@@ -1,7 +1,9 @@
 ﻿@page "/create-test"
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUserService  // Внедряем сервис для текущего пользователя
 @using System.Linq
+@using Microsoft.AspNetCore.Components.Authorization
 
 <div class="container relative" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 50px; min-height: 100vh;">
     <button @onclick="NavigateToEducation"
@@ -55,6 +57,52 @@
             <textarea id="testDescription" @bind="TestDescription" class="border rounded w-full py-2 px-3 text-gray-700" rows="4"></textarea>
         </div>
 
+        <div style="margin-bottom: 20px;">
+            <div class="flex gap-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" class="form-checkbox" @bind="IsFinal" />
+                    <span class="ml-2">Итоговый тест</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Создание вопроса -->
+        <div style="margin-bottom: 40px;">
+            <h3 class="text-xl font-semibold text-gray-800">Создание Вопроса</h3>
+
+            <div style="margin-bottom: 20px;">
+                <label for="questionText" class="block text-gray-700 text-lg font-medium">Текст вопроса:</label>
+                <input id="questionText" type="text" @bind="QuestionText" class="border rounded w-full py-2 px-3 text-gray-700" />
+            </div>
+
+            <button @onclick="AddQuestion" class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                Добавить вопрос
+            </button>
+
+            <!-- Список вопросов -->
+            @foreach (var question in Questions)
+            {
+                <div class="mt-4">
+                    <h4 class="text-lg font-semibold">Ответы для вопроса: @question.Text</h4>
+
+                    <!-- Поля для ввода ответов -->
+                    <div style="margin-bottom: 20px;">
+                        <label for="answerText" class="block text-gray-700 text-lg font-medium">Текст ответа:</label>
+                        <input id="answerText" type="text" @bind="AnswerText" class="border rounded w-full py-2 px-3 text-gray-700" />
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" class="form-checkbox" @bind="IsCorrect" />
+                            <span class="ml-2">Правильный ответ</span>
+                        </label>
+                    </div>
+
+                    <button @onclick="AddQuestion" class="btn btn-primary">Добавить вопрос</button>
+                </div>
+            }
+        </div>
+
         <button @onclick="CreatesTest" class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
             Создать тест
         </button>
@@ -80,7 +128,12 @@
     private string TestName;
     private string TestDescription;
     private bool? IsFinal = false;
-    private bool ForBeginners = true;
+    private string QuestionText; // Для ввода текста вопроса
+    private string AnswerText;   // Для ввода текста ответа
+    private bool IsCorrect;      // Для отметки правильного ответа
+    private List<MICourses.Models.Question> Questions = new List<MICourses.Models.Question>(); // Список вопросов для текущего теста
+    private List<MICourses.Models.Answer> AnswersForCurrentQuestion = new List<MICourses.Models.Answer>(); // Список ответов для текущего вопроса
+
     private List<MICourses.Models.Course> ExistingCourses = new();
     private List<MICourses.Models.Lesson> LessonsForSelectedCourse = new();
     private int? SelectedCourse { get; set; }
@@ -89,24 +142,39 @@
     private bool IsModalOpen = false;
     private string ModalMessage = string.Empty;
 
+    private User currentUser;
+
     protected override async Task OnInitializedAsync()
     {
-        ExistingCourses = await DbContext.Courses.ToListAsync();
+        currentUser = CurrentUserService.GetCurrentUser();
+
+        if (currentUser != null)
+        {
+            ExistingCourses = await DbContext.Users_Courses
+                .Where(uc => uc.ID_User == currentUser.ID_User && uc.Author == true)
+                .Select(uc => uc.ID_CourseNavigation)
+                .ToListAsync();
+        }
+        else
+        {
+            ModalMessage = "Пользователь не авторизован";
+            IsModalOpen = true;
+        }
     }
 
     private async Task LoadLessonsForCourse(ChangeEventArgs e)
     {
-        SelectedLesson = null; // Сбрасываем выбор урока
+        SelectedLesson = null;
 
         if (e.Value != null)
         {
             int courseId = Convert.ToInt32(e.Value);
             LessonsForSelectedCourse = await DbContext.Lessons.Where(l => l.ID_Course == courseId).ToListAsync();
-            SelectedCourse = courseId;  // Привязываем выбранный курс
+            SelectedCourse = courseId;
         }
         else
         {
-            LessonsForSelectedCourse.Clear();  // Очищаем список уроков, если курс не выбран
+            LessonsForSelectedCourse.Clear();
             SelectedCourse = null;
         }
     }
@@ -114,6 +182,49 @@
     private void CloseModal()
     {
         IsModalOpen = false;
+    }
+
+    private void AddQuestion()
+    {
+        if (string.IsNullOrWhiteSpace(QuestionText))
+        {
+            ModalMessage = "Текст вопроса не может быть пустым";
+            IsModalOpen = true;
+            return;
+        }
+
+        // Создаем новый вопрос
+        var newQuestion = new MICourses.Models.Question
+            {
+                Text = QuestionText,
+                ID_Test = SelectedLesson.Value // Привязываем вопрос к тесту
+            };
+
+        // Добавляем вопрос в список вопросов
+        Questions.Add(newQuestion);
+        QuestionText = string.Empty; // Очищаем поле ввода вопроса
+    }
+
+    private void AddAnswerToQuestion(MICourses.Models.Question question)
+    {
+        if (string.IsNullOrWhiteSpace(AnswerText))
+        {
+            ModalMessage = "Текст ответа не может быть пустым";
+            IsModalOpen = true;
+            return;
+        }
+
+        var newAnswer = new MICourses.Models.Answer
+            {
+                Text = AnswerText,
+                Correct = IsCorrect,
+                ID_Question = question.ID_Question // Связываем ответ с вопросом
+            };
+
+        // Добавляем ответ в список ответов для текущего вопроса
+        AnswersForCurrentQuestion.Add(newAnswer);
+        AnswerText = string.Empty; // Очищаем поле ввода ответа
+        IsCorrect = false; // Сбрасываем флаг правильности
     }
 
     private async Task CreatesTest()
@@ -156,6 +267,22 @@
 
         DbContext.Tests.Add(newTest);
         await DbContext.SaveChangesAsync();
+
+        // Добавляем все вопросы
+        foreach (var question in Questions)
+        {
+            question.ID_Test = newTest.ID_Test; // Привязываем вопрос к тесту
+            DbContext.Questions.Add(question);
+
+            // Добавляем ответы для каждого вопроса
+            foreach (var answer in AnswersForCurrentQuestion)
+            {
+                answer.ID_Question = question.ID_Question; // Привязываем ответ к вопросу
+                DbContext.Answers.Add(answer);
+            }
+        }
+
+        await DbContext.SaveChangesAsync(); // Сохраняем изменения
 
         NavigationManager.NavigateTo("/education");
     }

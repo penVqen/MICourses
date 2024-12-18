@@ -41,15 +41,17 @@
     </div>
 
     <div style="margin-bottom: 20px;">
-        <label class="block text-gray-700 text-lg font-medium">Тип:</label>
+        <label class="block text-gray-700 text-lg font-medium">Итоговый тест:</label>
         <div>
             <label>
-                <input type="radio" name="courseType" checked="@ForBeginners" @onchange="() => ForBeginners = true" /> Для начинающих
+                <input type="radio" name="testType" checked="@IsFinal" @onchange="() => IsFinal = true" />
+                Да
             </label>
         </div>
         <div>
             <label>
-                <input type="radio" name="courseType" checked="@(ForBeginners == false)" @onchange="() => ForBeginners = false" /> Продвинутый уровень
+                <input type="radio" name="testType" checked="@(IsFinal == false)" @onchange="() => IsFinal = false" />
+                Нет
             </label>
         </div>
     </div>
@@ -81,6 +83,7 @@
     private string SelectedLanguage;
     private bool? ForBeginners;
     private List<string> ExistingLanguages = new();
+    private bool? IsFinal = false;
 
     private bool IsModalOpen = false;
     private string ModalMessage = string.Empty;
