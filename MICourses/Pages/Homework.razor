@@ -28,55 +28,59 @@
 
     <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-        <div style="display: flex; gap: 10px; align-self: flex-start; position: relative; width: 100%;">
-            <button @onclick="ShowInProgressTests" style="@GetButtonStyle(InProgressTestsSelected)">
-                Текущие тесты
-            </button>
-            <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
-                Завершённые тесты
-            </button>
-            <button @onclick="NavigateToCreateTest" style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 150px; text-align: center;">
-                Создать тест
-            </button>
-        </div>
+            <div style="display: flex; gap: 10px; align-self: flex-start; position: relative; width: 100%;">
+                <button @onclick="ShowInProgressTests" style="@GetButtonStyle(InProgressTestsSelected)">
+                    Текущие тесты
+                </button>
+                <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
+                    Завершённые тесты
+                </button>
+                <button @onclick="NavigateToCreateTest" style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 150px; text-align: center;">
+                    Создать тест
+                </button>
+            </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            @if (FilteredTests == null || !FilteredTests.Any())
-            {
-                <div>Нет тестов для отображения.</div>
-            }
-            else
-            {
-                foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.ID_LessonNavigation.Number))
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                @if (FilteredTests == null || !FilteredTests.Any())
                 {
-                    <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                @userTest.ID_TestNavigation.Name
-                            </span>
-                            <div style="display: flex; gap: 10px;">
-                                @if (userTest.Score.HasValue)
-                                {
-                                    <span style="background: #D1C4E9; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; margin-top: 30px; font-size: 14px;">
-                                        Оценка: @userTest.Score
-                                    </span>
-                                }
-                                else
-                                {
-                                    <button @onclick="() => SelectTest(userTest)"
-                                            style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;"
-                                            disabled="@(!CanSelectTest(userTest))">
-                                        Выбрать
-                                    </button>
-                                }
+                    <div>Нет тестов для отображения.</div>
+                }
+                else
+                {
+                    foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.ID_LessonNavigation.Number))
+                    {
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                    @userTest.ID_TestNavigation.Name
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    @if (userTest.Score.HasValue)
+                                    {
+                                        <span style="background: #D1C4E9; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; margin-top: 30px; font-size: 14px;">
+                                            Оценка: @userTest.Score
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectTest(userTest)"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 100px; text-align: center;"
+                                                disabled="@(!CanSelectTest(userTest))">
+                                            Выбрать
+                                        </button>
+                                        <button @onclick="() => AddQuestionToTest(userTest)"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 150px; text-align: center;">
+                                            Добавить вопрос
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                            <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
+                                Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
                             </div>
                         </div>
-                        <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
-                            Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
-                        </div>
-                    </div>
+                    }
                 }
-            }
             </div>
         </div>
     </div>
@@ -163,6 +167,12 @@
     private void SelectTest(Users_Test test)
     {
         NavigationManager.NavigateTo($"/test/{test.ID_Test}");
+    }
+
+    private void AddQuestionToTest(Users_Test test)
+    {
+        // Логика для добавления вопроса
+        NavigationManager.NavigateTo($"/add-question/{test.ID_Test}");
     }
 
     private bool CanSelectTest(Users_Test test)
