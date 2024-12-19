@@ -167,11 +167,88 @@
             return;
         }
 
+        // Update user course status after scoring
+        await UpdateUserCourseStatus(currentUser.ID_User);
+
         await UpdateUserTestScore(currentUser.ID_User, TestId, score);
 
-        if (TestModel?.IsFinal == true)
+        ShowModal(score == null
+            ? "Вы не набрали минимальный балл для прохождения теста."
+            : $"Тест завершён. Ваша оценка: {score}.");
+    }
+
+    private async Task UpdateUserCourseStatus(int userId)
+    {
+        var courseId = await DbContext.Lessons
+            .Where(l => l.ID_Lesson == TestModel.ID_Lesson)
+            .Select(l => l.ID_Course)
+            .FirstOrDefaultAsync();
+
+        if (courseId == 0)
         {
-            await UpdateUserCourseStatus(currentUser.ID_User);
+            ShowModal("Не удалось найти курс, связанный с данным тестом.");
+            return;
+        }
+
+        var userCourse = await DbContext.Users_Courses
+            .FirstOrDefaultAsync(uc => uc.ID_User == userId && uc.ID_Course == courseId);
+
+        if (userCourse == null)
+        {
+            ShowModal("Не удалось найти запись пользователя в таблице Users_Course.");
+            return;
+        }
+
+        if (!userCourse.Status) // Только если это первый раз завершен курс
+        {
+            userCourse.Status = true;
+
+            // Проверяем, есть ли достижение "Первый курс"
+            const int firstCourseAchievementId = 2; // ID достижения "Первый курс"
+            var existingFirstCourseAchievement = await DbContext.Users_Achievments
+                .FirstOrDefaultAsync(ua => ua.ID_User == userId && ua.ID_Achievment == firstCourseAchievementId);
+
+            if (existingFirstCourseAchievement == null)
+            {
+                var newFirstCourseAchievement = new Users_Achievment
+                    {
+                        ID_User = userId,
+                        ID_Achievment = firstCourseAchievementId
+                    };
+                await DbContext.Users_Achievments.AddAsync(newFirstCourseAchievement);
+            }
+
+            // Проверяем количество завершенных курсов
+            var completedCoursesCount = await DbContext.Users_Courses
+                .Where(uc => uc.ID_User == userId && uc.Status)
+                .CountAsync();
+
+            if (completedCoursesCount >= 3) // Если 3 или более курсов завершено
+            {
+                const int threeCoursesAchievementId = 3; // ID достижения за 3 курса
+                var existingThreeCoursesAchievement = await DbContext.Users_Achievments
+                    .FirstOrDefaultAsync(ua => ua.ID_User == userId && ua.ID_Achievment == threeCoursesAchievementId);
+
+                if (existingThreeCoursesAchievement == null)
+                {
+                    var newThreeCoursesAchievement = new Users_Achievment
+                        {
+                            ID_User = userId,
+                            ID_Achievment = threeCoursesAchievementId
+                        };
+                    await DbContext.Users_Achievments.AddAsync(newThreeCoursesAchievement);
+                }
+            }
+
+            try
+            {
+                DbContext.Users_Courses.Update(userCourse);
+                await DbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                ShowModal($"Ошибка при обновлении статуса курса: {ex.Message}");
+            }
         }
     }
 
@@ -204,49 +281,10 @@
             }
 
             await DbContext.SaveChangesAsync();
-
-            ShowModal(score == null
-                ? "Вы не набрали минимальный балл для прохождения теста."
-                : $"Тест завершён. Ваша оценка: {score}.");
         }
         catch (Exception ex)
         {
             ShowModal($"Ошибка при сохранении данных: {ex.Message}");
-        }
-    }
-
-    private async Task UpdateUserCourseStatus(int userId)
-    {
-        var courseId = await DbContext.Lessons
-            .Where(l => l.ID_Lesson == TestModel.ID_Lesson)
-            .Select(l => l.ID_Course)
-            .FirstOrDefaultAsync();
-
-        if (courseId == 0)
-        {
-            ShowModal("Не удалось найти курс, связанный с данным тестом.");
-            return;
-        }
-
-        var userCourse = await DbContext.Users_Courses
-            .FirstOrDefaultAsync(uc => uc.ID_User == userId && uc.ID_Course == courseId);
-
-        if (userCourse == null)
-        {
-            ShowModal("Не удалось найти запись пользователя в таблице Users_Course.");
-            return;
-        }
-
-        userCourse.Status = true;
-
-        try
-        {
-            DbContext.Users_Courses.Update(userCourse);
-            await DbContext.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            ShowModal($"Ошибка при обновлении статуса курса: {ex.Message}");
         }
     }
 
