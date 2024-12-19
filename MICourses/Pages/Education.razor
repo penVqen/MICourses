@@ -45,16 +45,22 @@
                                 style="@GetButtonStyle(CompletedCoursesSelected)">
                             Пройденные
                         </button>
-                        <button @onclick="ShowMyCourses"
-                                class="custom-button-hover"
-                                style="@GetButtonStyle(MyCoursesSelected)">
-                            Мои
-                        </button>
+                        @if (UserRole == "Teacher")
+                        {
+                            <button @onclick="ShowMyCourses"
+                                    class="custom-button-hover"
+                                    style="@GetButtonStyle(MyCoursesSelected)">
+                                Мои курсы
+                            </button>
+                        }
                     </div>
-                    <button @onclick="CreateCourse"
-                            style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
-                        Создать курс
-                    </button>
+                    @if (UserRole == "Teacher" && MyCoursesSelected)
+                    {
+                        <button @onclick="CreateCourse"
+                                style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                            Создать курс
+                        </button>
+                    }
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -71,13 +77,16 @@
                                     @userCourse.ID_CourseNavigation.Name
                                 </span>
                                 <div style="display: flex; gap: 10px;">
-                                                @if (MyCoursesSelected)
+                                    @if (MyCoursesSelected)
                                     {
-                                        <button @onclick="() => EditCourse(userCourse)"
-                                                class="custom-button-hover"
-                                                style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
-                                            Редактировать
-                                        </button>
+                                        @if (UserRole == "Teacher" && userCourse.Author)
+                                        {
+                                            <button @onclick="() => EditCourse(userCourse)"
+                                                    class="custom-button-hover"
+                                                    style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
+                                                Редактировать
+                                            </button>
+                                        }
                                     }
                                     @if (userCourse.Status)
                                     {
@@ -101,65 +110,66 @@
                     }
                 </div>
             </div>
-        </div>
 
-        @if (SelectedCourse != null)
-        {
-            <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-                <h3 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Уроки:</h3>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px; position: relative;">
-                        <button @onclick="ShowInProgressLessons"
-                                class="custom-button-hover"
-                                style="@GetButtonStyle(InProgressLessonsSelected)">
-                            Текущие
-                        </button>
-                        <button @onclick="ShowCompletedLessons"
-                                class="custom-button-hover"
-                                style="@GetButtonStyle(CompletedLessonsSelected)">
-                            Пройденные
-                        </button>
-                        <button @onclick="CreateLesson"
-                                style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
-                            Добавить урок
-                        </button>
-                    </div>
-
+            @if (SelectedCourse != null)
+            {
+                    <h3 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Уроки:</h3>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        @if (FilteredLessons == null || !FilteredLessons.Any())
-                        {
-                            <div>Нет уроков для отображения.</div>
-                        }
-                        else
-                        {
-                            foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.Number))
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; position: relative;">
+                            <button @onclick="ShowInProgressLessons"
+                                    class="custom-button-hover"
+                                    style="@GetButtonStyle(InProgressLessonsSelected)">
+                                Текущие
+                            </button>
+                            <button @onclick="ShowCompletedLessons"
+                                    class="custom-button-hover"
+                                    style="@GetButtonStyle(CompletedLessonsSelected)">
+                                Пройденные
+                            </button>
+                            @if (UserRole == "Teacher" && MyCoursesSelected && SelectedCourse.Author)
                             {
-                                <div style="display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
-                                    <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
-                                        @userLesson.ID_LessonNavigation.Name
-                                    </span>
-                                    <div style="display: flex; gap: 10px;">
-                                        <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
-                                                class="custom-button-hover"
-                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
-                                            Перейти
-                                        </button>
-                                        @if (MyCoursesSelected)
-                                        {
-                                            <button @onclick="() => EditLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
-                                                    class="custom-button-hover"
-                                                    style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
-                                                Редактировать
-                                            </button>
-                                        }
-                                    </div>
-                                </div>
+                                <button @onclick="CreateLesson"
+                                        style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                                    Добавить урок
+                                </button>
                             }
-                        }
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            @if (FilteredLessons == null || !FilteredLessons.Any())
+                            {
+                                <div>Нет уроков для отображения.</div>
+                            }
+                            else
+                            {
+                                foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.Number))
+                                {
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                                        <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                            @userLesson.ID_LessonNavigation.Name
+                                        </span>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
+                                                    class="custom-button-hover"
+                                                    style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                                Перейти
+                                            </button>
+                                            @if (MyCoursesSelected && UserRole == "Teacher" && SelectedCourse.Author)
+                                            {
+                                                <button @onclick="() => EditLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
+                                                        class="custom-button-hover"
+                                                        style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
+                                                    Редактировать
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
                     </div>
-                </div>
-            </div>
-        }
+            }
+        </div>
     </div>
 </div>
 
@@ -180,11 +190,14 @@
     private bool CompletedLessonsSelected { get; set; }
     private bool MyCoursesSelected { get; set; }
 
+    private string UserRole { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
         if (currentUser != null)
         {
+            UserRole = currentUser.Role;
             Courses = await DbContext.Users_Courses
                 .Include(uc => uc.ID_CourseNavigation)
                 .Where(uc => uc.ID_User == currentUser.ID_User)

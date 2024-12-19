@@ -1,4 +1,4 @@
-﻿@page "/create-question/{ID_Test:int}"
+﻿@page "/add-question/{ID_Test:int}"
 
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
@@ -17,17 +17,6 @@
         Создание вопроса
     </h2>
 
-    <div style="margin-bottom: 20px;">
-        <label class="block text-gray-700 text-lg font-medium">Тест:</label>
-        <select @onchange="LoadTestsForCourse" class="border rounded w-full py-2 px-3 text-gray-700">
-            <option value="" disabled selected>Выберите тест</option>
-            @foreach (var test in ExistingTests)
-            {
-                <option value="@test.ID_Test">@test.Name</option>
-            }
-        </select>
-    </div>
-
     @if (SelectedTest != null)
     {
         <div style="margin-bottom: 20px;">
@@ -36,20 +25,40 @@
         </div>
 
         <div style="margin-bottom: 20px;">
-            <label for="answers" class="block text-gray-700 text-lg font-medium">Ответы:</label>
-            @for (int i = 0; i < Answers.Count; i++)
-            {
-                <div style="margin-bottom: 10px;">
-                    <input type="text" @bind="Answers[i].Text" class="border rounded w-full py-2 px-3 text-gray-700" placeholder="Ответ" />
-                    <input type="checkbox" @bind="Answers[i].Correct" class="ml-2" /> Верный ответ
-                </div>
-            }
-            <button @onclick="AddAnswer" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                Добавить ответ
+            <label for="answerText" class="block text-gray-700 text-lg font-medium">Текст ответа:</label>
+            <input type="text" @bind="NewAnswerText" class="border rounded w-full py-2 px-3 text-gray-700" />
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label class="text-gray-700 text-lg font-medium">Правильный ответ:</label>
+            <input type="checkbox" @bind="IsCorrectAnswer" />
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <button @onclick="CreateAnswer"
+                    class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    disabled="@string.IsNullOrWhiteSpace(NewAnswerText)">
+                Создать ответ
             </button>
         </div>
 
-        <button @onclick="CreatesQuestion" class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
+        <h3 class="text-lg font-semibold text-gray-800">Добавленные ответы</h3>
+        @foreach (var answer in Answers)
+        {
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                <span class="font-bold">@($"{Answers.IndexOf(answer) + 1}.")</span>
+                <input type="text" @bind="answer.Text" class="border rounded w-full py-2 px-3 text-gray-700" />
+                <label class="ml-2">Правильный ответ:</label>
+                <input type="checkbox" @bind="answer.Correct" />
+                <button @onclick="(() => RemoveAnswer(answer))"
+                        class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600">
+                    Удалить
+                </button>
+            </div>
+        }
+
+        <button @onclick="CreatesQuestion"
+                class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
             Создать вопрос
         </button>
     }
@@ -72,62 +81,65 @@
 
 @code {
     private string QuestionText;
-    private List<Answer> Answers = new List<Answer> { new Answer() };  // Изначально один пустой ответ
+    private string NewAnswerText;
+    private bool IsCorrectAnswer;
+    private List<Answer> Answers = new List<Answer>();
     private int? SelectedTest { get; set; }
-    private List<Test> ExistingTests = new List<Test>();
     private bool IsModalOpen = false;
     private string ModalMessage = string.Empty;
 
-    [Parameter] public int ID_Test { get; set; }  // Параметр ID_Test из URL
+    [Parameter] public int ID_Test { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        var currentUser = CurrentUserService.GetCurrentUser();
-        if (currentUser == null)
-        {
-            ModalMessage = "Пользователь не авторизован";
-            IsModalOpen = true;
-        }
-        else
-        {
-            // Исправляем использование DbContext для загрузки тестов
-            ExistingTests = await MICourses.Models.Test.ToListAsync();  // Здесь использован DbContext.Tests
+        SelectedTest = ID_Test;
+    }
 
-            // Загрузим тест по ID_Test, если он передан в URL
-            if (ID_Test > 0)
+    private void CreateAnswer()
+    {
+        if (string.IsNullOrWhiteSpace(NewAnswerText)) return;
+
+        var newAnswer = new Answer
             {
-                SelectedTest = ID_Test;
-            }
-        }
+                Text = NewAnswerText,
+                Correct = IsCorrectAnswer
+            };
+
+        Answers.Add(newAnswer);
+
+        NewAnswerText = string.Empty;
+        IsCorrectAnswer = false;
+
+        StateHasChanged();
     }
 
-
-    private void CloseModal() => IsModalOpen = false;
-
-    private async Task LoadTestsForCourse(ChangeEventArgs e)
+    private void RemoveAnswer(Answer answer)
     {
-        SelectedTest = e.Value != null ? int.Parse(e.Value.ToString()) : (int?)null;
-    }
-
-    private void AddAnswer()
-    {
-        Answers.Add(new Answer());  // Добавляем новый пустой ответ
+        Answers.Remove(answer);
+        StateHasChanged();
     }
 
     private async Task CreatesQuestion()
     {
-        if (string.IsNullOrWhiteSpace(QuestionText) || SelectedTest == null || !Answers.Any(a => a.Correct))
+        if (string.IsNullOrWhiteSpace(QuestionText))
         {
-            ModalMessage = "Заполните все поля и выберите верный ответ";
+            ModalMessage = "Заполните текст вопроса.";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (Answers.Any(a => string.IsNullOrWhiteSpace(a.Text)))
+        {
+            ModalMessage = "Заполните текст для каждого ответа.";
             IsModalOpen = true;
             return;
         }
 
         var newQuestion = new Question
-        {
-            Text = QuestionText,
-            ID_Test = SelectedTest.Value
-        };
+            {
+                Text = QuestionText,
+                ID_Test = SelectedTest ?? ID_Test
+            };
 
         DbContext.Questions.Add(newQuestion);
         await DbContext.SaveChangesAsync();
@@ -135,19 +147,20 @@
         foreach (var answer in Answers)
         {
             var newAnswer = new Answer
-            {
-                Text = answer.Text,
-                Correct = answer.Correct,
-                ID_Question = newQuestion.ID_Question
-            };
+                {
+                    Text = answer.Text,
+                    Correct = answer.Correct,
+                    ID_Question = newQuestion.ID_Question
+                };
 
             DbContext.Answers.Add(newAnswer);
         }
 
         await DbContext.SaveChangesAsync();
-
         NavigationManager.NavigateTo("/education");
     }
+
+    private void CloseModal() => IsModalOpen = false;
 
     private void NavigateToEducation() => NavigationManager.NavigateTo("/education");
 }
