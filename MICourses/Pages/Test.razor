@@ -22,6 +22,12 @@
         {
             <div class="bg-white rounded-lg p-5 shadow-md space-y-3">
                 <h2 class="text-lg font-medium text-gray-700">@question.Text</h2>
+
+                @if (question.Answers.Count > 1)
+                {
+                    <div class="text-sm text-red-500">Важно: у вопроса несколько ответов</div>
+                }
+
                 @if (question.Answers.Count == 1)
                 {
                     <input type="text" class="w-full border rounded-lg p-2 text-gray-700"
@@ -167,7 +173,6 @@
             return;
         }
 
-        // Update user course status after scoring
         await UpdateUserCourseStatus(currentUser.ID_User);
 
         await UpdateUserTestScore(currentUser.ID_User, TestId, score);
@@ -199,12 +204,11 @@
             return;
         }
 
-        if (!userCourse.Status) // Только если это первый раз завершен курс
+        if (!userCourse.Status)
         {
             userCourse.Status = true;
 
-            // Проверяем, есть ли достижение "Первый курс"
-            const int firstCourseAchievementId = 2; // ID достижения "Первый курс"
+            const int firstCourseAchievementId = 2;
             var existingFirstCourseAchievement = await DbContext.Users_Achievments
                 .FirstOrDefaultAsync(ua => ua.ID_User == userId && ua.ID_Achievment == firstCourseAchievementId);
 
@@ -218,14 +222,13 @@
                 await DbContext.Users_Achievments.AddAsync(newFirstCourseAchievement);
             }
 
-            // Проверяем количество завершенных курсов
             var completedCoursesCount = await DbContext.Users_Courses
                 .Where(uc => uc.ID_User == userId && uc.Status)
                 .CountAsync();
 
-            if (completedCoursesCount >= 3) // Если 3 или более курсов завершено
+            if (completedCoursesCount >= 3)
             {
-                const int threeCoursesAchievementId = 3; // ID достижения за 3 курса
+                const int threeCoursesAchievementId = 3;
                 var existingThreeCoursesAchievement = await DbContext.Users_Achievments
                     .FirstOrDefaultAsync(ua => ua.ID_User == userId && ua.ID_Achievment == threeCoursesAchievementId);
 
