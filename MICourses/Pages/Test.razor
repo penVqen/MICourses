@@ -23,7 +23,7 @@
             <div class="bg-white rounded-lg p-5 shadow-md space-y-3">
                 <h2 class="text-lg font-medium text-gray-700">@question.Text</h2>
 
-                @if (question.Answers.Count > 1)
+                @if (question.Answers.Count(a => a.Correct) > 1)
                 {
                     <div class="text-sm text-red-500">Важно: у вопроса несколько ответов</div>
                 }

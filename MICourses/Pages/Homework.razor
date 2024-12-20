@@ -36,9 +36,12 @@
                 <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
                     Завершённые тесты
                 </button>
+                @if (UserRole == "Teacher")
+                {
                 <button @onclick="ShowMyTests" style="@GetButtonStyle(MyTestsSelected)">
                     Мои тесты
                 </button>
+                }
                 @if (UserRole == "Teacher" && MyTestsSelected)
                 {
                     <button @onclick="NavigateToCreateTest" style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 150px; text-align: center;">
