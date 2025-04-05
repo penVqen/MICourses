@@ -1,0 +1,27 @@
+﻿<div class="course-card" style="background-color: white; border-radius: 10px; padding: 20px; border: 1px solid #ddd; display: flex; flex-direction: column; justify-content: space-between;">
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Логин -->
+        <div style="font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-user" style="color: #777;"></i>
+            <span>@User.Login</span>
+        </div>
+
+        <!-- Почта -->
+        <div style="font-size: 14px; color: #555; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-envelope" style="color: #777;"></i>
+            <span>@User.Email</span>
+        </div>
+
+        <!-- Роль, Фамилия и Имя на одной строке -->
+        <div style="font-size: 14px; color: #777; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-shield" style="color: #777;"></i>
+            <span style="font-weight: bold;">@User.Role</span>
+            <span>@($"{User.Surname} {User.Name}")</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public User User { get; set; }
+}
