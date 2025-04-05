@@ -8,17 +8,31 @@
     <p style="margin: 10px 0 30px; font-size: 14px;">@Course.Description</p>
 
     <div class="button-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; gap: 10px;">
+        <!-- Срок обучения -->
         <div class="study-period" style="font-size: 10px; background-color: #EEE9F6; padding: 6px 12px; border-radius: 5px; flex: 1; font-weight: bold;">
             Срок обучения:<br>
             @Course.StudyPeriod
         </div>
-        <button class="enroll-button" style="font-size: 10px; background-color: #CCBDDE; padding: 12px 12px; border-radius: 5px; flex: 1; font-weight: bold; text-align: center; border: none; cursor: pointer; color: black;"
-                @onclick="EnrollUser"
-                onmouseover="this.style.backgroundColor='#EEE9F6'"
-                onmouseout="this.style.backgroundColor='#CCBDDE'">
-            Записаться
-        </button>
 
+        <!-- Прогресс (если включен) -->
+        @if (ShowProgress)
+        {
+            <div class="progress" style="font-size: 12px; background-color: #EEE9F6; padding: 6px 12px; border-radius: 5px; flex: 1; font-weight: bold;">
+                Прогресс:<br>
+                @Progress%
+            </div>
+        }
+
+        <!-- Кнопка "Записаться" (если включена) -->
+        @if (ShowEnrollButton)
+        {
+            <button class="enroll-button" style="font-size: 10px; background-color: #CCBDDE; padding: 12px 12px; border-radius: 5px; flex: 1; font-weight: bold; text-align: center; border: none; cursor: pointer; color: black;"
+                    @onclick="EnrollUser"
+                    onmouseover="this.style.backgroundColor='#EEE9F6'"
+                    onmouseout="this.style.backgroundColor='#CCBDDE'">
+                Записаться
+            </button>
+        }
     </div>
 </div>
 
@@ -26,19 +40,30 @@
     [Parameter]
     public Course Course { get; set; }
 
+    [Parameter]
+    public int Progress { get; set; }
+
+    [Parameter]
+    public bool ShowProgress { get; set; } = false;
+
+    [Parameter]
+    public bool ShowEnrollButton { get; set; } = true;
+
     [Inject]
     private CurrentUserService CurrentUserService { get; set; }
 
     [Inject]
     private MIContext DbContext { get; set; }
 
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
     private async Task EnrollUser()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
-
         if (currentUser == null)
         {
-            Console.WriteLine("Пользователь не авторизован");
+            NavigationManager.NavigateTo("/authorization");
             return;
         }
 
@@ -65,4 +90,3 @@
         Console.WriteLine("Пользователь успешно записан на курс");
     }
 }
-

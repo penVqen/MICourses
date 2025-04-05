@@ -88,6 +88,17 @@
             </form>
         </div>
 
+        <!-- Плашка прогресса курсов -->
+        <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+            <h2 class="text-lg font-bold">Прогресс прохождения курсов</h2>
+            <p class="text-sm text-gray-600">Просмотр вашего прогресса по всем курсам.</p>
+            <button type="button" @onclick="NavigateToProgress"
+                    class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    style="background-color: rgb(178, 146, 215);">
+                Открыть прогресс курсов
+            </button>
+        </div>
+
         <!-- Плашка удаления профиля -->
         <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
             <h2 class="text-lg font-bold">Удаление профиля</h2>
@@ -225,6 +236,11 @@
         MiddleNameError = null;
         BirthdayError = null;
         PhoneNumberError = null;
+    }
+
+    private void NavigateToProgress()
+    {
+        NavigationManager.NavigateTo("/progress");
     }
 
     private void NavigateToAdminPanel()
