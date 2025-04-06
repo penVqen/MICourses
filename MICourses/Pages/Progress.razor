@@ -5,7 +5,6 @@
 
 <div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px; min-height: 100vh;">
     <h1 class="text-4xl font-bold mb-8">Прогресс прохождения курсов</h1>
-
     @if (UserCourses == null || UserCourses.Count == 0)
     {
         <p class="text-gray-600">Вы пока не записаны ни на один курс.</p>
@@ -20,7 +19,19 @@
                 {
                     // Используем предварительно рассчитанный прогресс
                     int progress = ProgressByCourse[course.ID_Course];
-                    <CourseCard Course="course" Progress="@progress" ShowProgress="true" ShowEnrollButton="false" />
+                    <div class="course-card" style="background-color: white; border-radius: 10px; padding: 20px; border: 1px solid #ddd; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="tags" style="font-size: 12px; background-color: #EEE9F6; padding: 6px 10px; border-radius: 5px; width: 95%; font-weight: bold; margin-bottom: 10px;">
+                            @course.Language • @(course.ForBeginners ? "Продвинутый" : "Для начинающих")
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: bold; margin-top: 10px;">@course.Name</h3>
+                        <p style="margin: 10px 0 30px; font-size: 14px;">@course.Description</p>
+                        <div class="progress-info" style="margin-top: auto;">
+                            <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">
+                                Прогресс: @progress%
+                            </div>
+                            <progress value="@progress" max="100" style="width: 100%; height: 10px; border-radius: 5px;"></progress>
+                        </div>
+                    </div>
                 }
             }
         </div>
@@ -75,7 +86,6 @@
 
         // Рассчитываем прогресс
         int progress = (int)((double)completedLessons / lessons.Count * 100);
-
         return progress;
     }
 }
