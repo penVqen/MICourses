@@ -1,0 +1,92 @@
+﻿@page "/analytics"
+@inject MIContext DbContext
+
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Аналитика по порталу</h1>
+
+    <!-- Графики: Количество пользователей и распределение ролей -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- График: Количество пользователей -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Количество пользователей</h2>
+            <ChartComponent CanvasId="userCountChart" Configuration="_userCountChartConfig" />
+        </div>
+
+        <!-- График: Распределение ролей -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Распределение ролей пользователей</h2>
+            <ChartComponent CanvasId="roleDistributionChart" Configuration="_roleDistributionChartConfig" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private ChartConfiguration _userCountChartConfig;
+    private ChartConfiguration _roleDistributionChartConfig;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var users = await DbContext.Users.ToListAsync();
+        int totalUsers = users.Count;
+        int teacherCount = users.Count(u => u.Role == "Teacher");
+        int studentCount = users.Count(u => u.Role == "User");
+
+        // Настройка графика количества пользователей
+        _userCountChartConfig = new ChartConfiguration
+            {
+                Type = "bar",
+                Data = new ChartData
+                {
+                    Labels = new List<string> { "Пользователи" },
+                    Datasets = new List<ChartDataset>
+                {
+                    new ChartDataset
+                    {
+                        Label = "Количество",
+                        Data = new List<double> { totalUsers },
+                        BackgroundColor = "#74c0fc",
+                        BorderColor = "#4dabf7"
+                    }
+                }
+                },
+                Options = new ChartOptions
+                {
+                    Responsive = true,
+                    MaintainAspectRatio = false, // Корректно передаем параметр
+                    Title = new ChartTitle
+                    {
+                        Display = true,
+                        Text = "Общее количество пользователей"
+                    }
+                }
+            };
+
+        // Настройка графика распределения ролей
+        _roleDistributionChartConfig = new ChartConfiguration
+            {
+                Type = "pie",
+                Data = new ChartData
+                {
+                    Labels = new List<string> { "Преподаватели", "Студенты" },
+                    Datasets = new List<ChartDataset>
+                {
+                    new ChartDataset
+                    {
+                        Data = new List<double> { teacherCount, studentCount },
+                        BackgroundColor = new List<string> { "#ff6b6b", "#4caf50" }
+                    }
+                }
+                },
+                Options = new ChartOptions
+                {
+                    Responsive = true,
+                    MaintainAspectRatio = false, // Корректно передаем параметр
+                    Title = new ChartTitle
+                    {
+                        Display = true,
+                        Text = "Распределение ролей пользователей"
+                    }
+                }
+            };
+    }
+}
