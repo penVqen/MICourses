@@ -17,6 +17,19 @@
 <body>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
 
+    <script>
+        function downloadFileFromStream(fileName, fileData) {
+            var blob = new Blob([fileData], { type: 'application/octet-stream' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        }
+
+    </script>
+
+
+
     <script src="_framework/blazor.server.js"></script>
 </body>
 </html>

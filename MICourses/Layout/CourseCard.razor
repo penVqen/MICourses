@@ -8,46 +8,57 @@
     <p style="margin: 10px 0 30px; font-size: 14px;">@Course.Description</p>
 
     <div class="button-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; gap: 10px;">
-        <!-- Срок обучения -->
         <div class="study-period" style="font-size: 10px; background-color: #EEE9F6; padding: 6px 12px; border-radius: 5px; flex: 1; font-weight: bold;">
             Срок обучения:<br>
             @Course.StudyPeriod
         </div>
-
-        <!-- Прогресс (если включен) -->
-        @if (ShowProgress)
-        {
-            <div class="progress" style="font-size: 12px; background-color: #EEE9F6; padding: 6px 12px; border-radius: 5px; flex: 1; font-weight: bold;">
-                Прогресс:<br>
-                @Progress%
-            </div>
-        }
-
-        <!-- Кнопка "Записаться" (если включена) -->
-        @if (ShowEnrollButton)
-        {
-            <button class="enroll-button" style="font-size: 10px; background-color: #CCBDDE; padding: 12px 12px; border-radius: 5px; flex: 1; font-weight: bold; text-align: center; border: none; cursor: pointer; color: black;"
-                    @onclick="EnrollUser"
-                    onmouseover="this.style.backgroundColor='#EEE9F6'"
-                    onmouseout="this.style.backgroundColor='#CCBDDE'">
-                Записаться
-            </button>
-        }
+        <button class="enroll-button" style="font-size: 10px; background-color: #CCBDDE; padding: 12px 12px; border-radius: 5px; flex: 1; font-weight: bold; text-align: center; border: none; cursor: pointer; color: black;"
+                @onclick="EnrollUser"
+                onmouseover="this.style.backgroundColor='#EEE9F6'"
+                onmouseout="this.style.backgroundColor='#CCBDDE'">
+            Записаться
+        </button>
     </div>
 </div>
+
+@if (IsModalOpen)
+{
+    <div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-1/3">
+            <h3 class="text-lg font-semibold">@ModalMessage</h3>
+            <div class="flex justify-end gap-4 mt-6">
+                @if (ModalType == CourseModalType.NotAuthorized)
+                {
+                    <button @onclick="NavigateToAuthorization"
+                            style="background-color: rgb(178, 146, 215);"
+                            class="text-white px-4 py-2 rounded-md"
+                            onmouseover="this.style.backgroundColor='rgb(158, 126, 195)'"
+                            onmouseout="this.style.backgroundColor='rgb(178, 146, 215)'">
+                        Авторизоваться
+                    </button>
+                }
+                @if (ModalType == CourseModalType.AlreadyEnrolled || ModalType == CourseModalType.EnrollmentSuccess)
+                {
+                    <button @onclick="NavigateToEducation"
+                            style="background-color: rgb(178, 146, 215);"
+                            class="text-white px-4 py-2 rounded-md"
+                            onmouseover="this.style.backgroundColor='rgb(158, 126, 195)'"
+                            onmouseout="this.style.backgroundColor='rgb(178, 146, 215)'">
+                        Посмотреть
+                    </button>
+                }
+                <button @onclick="CloseModal"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
     public Course Course { get; set; }
-
-    [Parameter]
-    public int Progress { get; set; }
-
-    [Parameter]
-    public bool ShowProgress { get; set; } = false;
-
-    [Parameter]
-    public bool ShowEnrollButton { get; set; } = true;
 
     [Inject]
     private CurrentUserService CurrentUserService { get; set; }
@@ -58,12 +69,17 @@
     [Inject]
     private NavigationManager NavigationManager { get; set; }
 
+    private bool IsModalOpen { get; set; } = false;
+    private string ModalMessage { get; set; } = string.Empty;
+    private CourseModalType ModalType { get; set; }
+
     private async Task EnrollUser()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
+
         if (currentUser == null)
         {
-            NavigationManager.NavigateTo("/authorization");
+            ShowModal("Вы не авторизованы. Авторизуйтесь, чтобы продолжить.", CourseModalType.NotAuthorized);
             return;
         }
 
@@ -72,7 +88,7 @@
 
         if (existingEnrollment != null)
         {
-            Console.WriteLine("Пользователь уже записан на этот курс");
+            ShowModal("Вы уже записаны на данный курс.", CourseModalType.AlreadyEnrolled);
             return;
         }
 
@@ -87,6 +103,70 @@
         DbContext.Users_Courses.Add(userCourse);
         await DbContext.SaveChangesAsync();
 
-        Console.WriteLine("Пользователь успешно записан на курс");
+        var lessons = await DbContext.Lessons
+            .Where(l => l.ID_Course == Course.ID_Course)
+            .ToListAsync();
+
+        foreach (var lesson in lessons)
+        {
+            var userLesson = new Users_Lesson
+                {
+                    ID_User = currentUser.ID_User,
+                    ID_Lesson = lesson.ID_Lesson,
+                    Status = false,
+                };
+
+            DbContext.Users_Lessons.Add(userLesson);
+
+            var tests = await DbContext.Tests
+                .Where(t => t.ID_Lesson == lesson.ID_Lesson)
+                .ToListAsync();
+
+            foreach (var test in tests)
+            {
+                var userTest = new Users_Test
+                    {
+                        ID_User = currentUser.ID_User,
+                        ID_Test = test.ID_Test,
+                        Score = null
+                    };
+
+                DbContext.Users_Tests.Add(userTest);
+            }
+        }
+
+        await DbContext.SaveChangesAsync();
+
+        ShowModal("Вы успешно подписались на курс!", CourseModalType.EnrollmentSuccess);
+    }
+
+
+    private void ShowModal(string message, CourseModalType type)
+    {
+        ModalMessage = message;
+        ModalType = type;
+        IsModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        IsModalOpen = false;
+    }
+
+    private void NavigateToAuthorization()
+    {
+        NavigationManager.NavigateTo("/authorization");
+    }
+
+    private void NavigateToEducation()
+    {
+        NavigationManager.NavigateTo("/education");
+    }
+
+    private enum CourseModalType
+    {
+        NotAuthorized,
+        AlreadyEnrolled,
+        EnrollmentSuccess
     }
 }
