@@ -1,47 +1,246 @@
 ﻿@page "/homework"
+@inject MIContext DbContext
+@inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
 
 <link href="css/site.css" rel="stylesheet">
 
-<div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto;">
+<div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto; min-height: 100vh;">
 
-    <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; justify-content: center; align-items: center; min-height: 270px; max-height: 270px">
-
+    <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; min-height: 270px; max-height: 270px;">
         <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 160px; align-items: flex-start;">
-
             <a href="/education" class="customs-button">
                 <span class="iconify" data-icon="mdi:school-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Обучение</span>
             </a>
-
             <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 0;" />
-
             <a href="/homework" class="custom-button">
                 <span class="iconify" data-icon="mdi:clipboard-check-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Задания</span>
             </a>
-
             <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 0;" />
-
-            <a href="/achievments" class="customs-button">
+            <a href="/achievements" class="customs-button">
                 <span class="iconify" data-icon="mdi:trophy-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Достижения</span>
             </a>
-
         </div>
     </div>
 
     <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
-
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); flex: 1; display: flex; justify-content: center; align-items: center;">
-                Первый блок
+            <div style="display: flex; gap: 10px; align-self: flex-start; position: relative; width: 100%;">
+
+                <button @onclick="ShowInProgressTests" style="@GetButtonStyle(InProgressTestsSelected)">
+                    Текущие тесты
+                </button>
+                <button @onclick="ShowCompletedTests" style="@GetButtonStyle(CompletedTestsSelected)">
+                    Завершённые тесты
+                </button>
+                @if (UserRole == "Teacher")
+                {
+                <button @onclick="ShowMyTests" style="@GetButtonStyle(MyTestsSelected)">
+                    Мои тесты
+                </button>
+                }
+                @if (UserRole == "Teacher" && MyTestsSelected)
+                {
+                    <button @onclick="NavigateToCreateTest" style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 150px; text-align: center;">
+                        Создать тест
+                    </button>
+                }
             </div>
-        </div>
 
-        <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); flex: 1; display: flex; justify-content: center; align-items: center;">
-                Второй блок
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                @if (FilteredTests == null || !FilteredTests.Any())
+                {
+                    <div>Нет тестов для отображения.</div>
+                }
+                else
+                {
+                    foreach (var userTest in FilteredTests.OrderBy(t => t.ID_TestNavigation.ID_LessonNavigation.Number))
+                    {
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; background: white; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                    @userTest.ID_TestNavigation.Name
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    @if (userTest.Score.HasValue)
+                                    {
+                                        <span style="background: #D1C4E9; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; margin-top: 30px; font-size: 14px;">
+                                            Оценка: @userTest.Score
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectTest(userTest)"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 100px; text-align: center;"
+                                                disabled="@(!CanSelectTest(userTest))">
+                                            Выбрать
+                                        </button>
+                                        @if (MyTestsSelected && UserRole == "Teacher")
+                                        {
+                                            <button @onclick="() => AddQuestionToTest(userTest)"
+                                                    style="background: #D1C4E9; border: none; border-radius: 20px; margin-top: 30px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; width: 150px; text-align: center;">
+                                                Добавить вопрос
+                                            </button>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div style="font-family: Arial, sans-serif; font-style: italic; font-size: 16px; color: #555; margin-top: 10px;">
+                                Курс: @(userTest.ID_TestNavigation.ID_LessonNavigation?.ID_CourseNavigation?.Name ?? "Не указан")
+                            </div>
+                        </div>
+                    }
+                }
             </div>
         </div>
     </div>
 </div>
+
+@code {
+    private List<Users_Test> Tests;
+    private List<Users_Test> FilteredTests;
+    private Dictionary<int, int> LessonTestNumbers;
+
+    private bool InProgressTestsSelected { get; set; } = true;
+    private bool CompletedTestsSelected { get; set; }
+    private bool MyTestsSelected { get; set; }
+    private string UserRole { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser != null)
+        {
+            Tests = await DbContext.Users_Tests
+                .Include(ut => ut.ID_TestNavigation)
+                .ThenInclude(t => t.ID_LessonNavigation)
+                .Where(ut => ut.ID_User == currentUser.ID_User)
+                .ToListAsync();
+
+            LessonTestNumbers = await DbContext.Tests
+                .Include(t => t.ID_LessonNavigation)
+                .Where(t => Tests.Select(ut => ut.ID_Test).Contains(t.ID_Test))
+                .ToDictionaryAsync(t => t.ID_Test, t => t.ID_LessonNavigation.Number);
+
+            var completedLessons = await DbContext.Users_Lessons
+                .Where(ul => ul.ID_User == currentUser.ID_User && ul.Status)
+                .ToListAsync();
+
+            UpdateFilteredTests(completedLessons);
+        }
+        else
+        {
+            Tests = new List<Users_Test>();
+            FilteredTests = Tests;
+        }
+
+        UserRole = currentUser.Role;
+    }
+
+    private async Task UpdateFilteredTests(List<Users_Lesson> completedLessons)
+    {
+        var completedTestIds = Tests.Where(t => t.Score.HasValue).Select(t => t.ID_Test).ToHashSet();
+
+        if (MyTestsSelected)
+        {
+            var userCourses = await DbContext.Users_Courses
+                .Where(uc => uc.ID_User == CurrentUserService.GetCurrentUser().ID_User && uc.Author)
+                .Select(uc => uc.ID_Course)
+                .ToListAsync();
+
+            FilteredTests = Tests.Where(t =>
+            {
+                var lessonNumber = LessonTestNumbers[t.ID_Test];
+                var requiredPreviousTestIds = LessonTestNumbers
+                    .Where(kv => kv.Value < lessonNumber)
+                    .Select(kv => kv.Key);
+
+                return requiredPreviousTestIds.All(completedTestIds.Contains) &&
+                       completedLessons.Any(cl => cl.ID_Lesson == t.ID_TestNavigation.ID_Lesson) &&
+                       userCourses.Contains(t.ID_TestNavigation.ID_LessonNavigation.ID_Course) &&
+                       (CompletedTestsSelected ? t.Score.HasValue : !t.Score.HasValue);
+            }).ToList();
+        }
+        else
+        {
+            FilteredTests = Tests.Where(t =>
+                completedLessons.Any(cl => cl.ID_Lesson == t.ID_TestNavigation.ID_Lesson) &&
+                (CompletedTestsSelected ? t.Score.HasValue : !t.Score.HasValue)
+            ).ToList();
+        }
+    }
+
+    private void ShowInProgressTests()
+    {
+        InProgressTestsSelected = true;
+        CompletedTestsSelected = false;
+        MyTestsSelected = false;
+
+        var completedLessons = DbContext.Users_Lessons
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.Status)
+            .ToList();
+
+        UpdateFilteredTests(completedLessons);
+    }
+
+    private void ShowCompletedTests()
+    {
+        InProgressTestsSelected = false;
+        CompletedTestsSelected = true;
+        MyTestsSelected = false;
+
+        var completedLessons = DbContext.Users_Lessons
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.Status)
+            .ToList();
+
+        UpdateFilteredTests(completedLessons);
+    }
+
+    private void ShowMyTests()
+    {
+        InProgressTestsSelected = false;
+        CompletedTestsSelected = false;
+        MyTestsSelected = true;
+
+        var completedLessons = DbContext.Users_Lessons
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.Status)
+            .ToList();
+
+        UpdateFilteredTests(completedLessons);
+    }
+
+    private void SelectTest(Users_Test test)
+    {
+        NavigationManager.NavigateTo($"/test/{test.ID_Test}");
+    }
+
+    private void AddQuestionToTest(Users_Test test)
+    {
+        NavigationManager.NavigateTo($"/add-question/{test.ID_Test}");
+    }
+
+    private bool CanSelectTest(Users_Test test)
+    {
+        var lessonNumber = LessonTestNumbers[test.ID_Test];
+        var completedTestIds = Tests.Where(t => t.Score.HasValue).Select(t => t.ID_Test).ToHashSet();
+
+        var requiredPreviousTestIds = LessonTestNumbers
+            .Where(kv => kv.Value < lessonNumber)
+            .Select(kv => kv.Key);
+
+        return requiredPreviousTestIds.All(completedTestIds.Contains);
+    }
+
+    private string GetButtonStyle(bool isSelected)
+    {
+        return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
+    }
+
+    private void NavigateToCreateTest()
+    {
+        NavigationManager.NavigateTo("/create-test");
+    }
+}

@@ -1,47 +1,388 @@
 ﻿@page "/education"
+@using SkiaSharp
+@inject MIContext DbContext
+@inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
 
 <link href="css/site.css" rel="stylesheet">
 
-<div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto;">
+<div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding-top: 150px; width: calc(100% - 400px); margin: 0 auto; min-height: 100vh;">
 
-    <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; justify-content: center; align-items: center; min-height: 270px; max-height: 270px">
-
+    <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; min-height: 270px; max-height: 270px;">
         <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 160px; align-items: flex-start;">
-
             <a href="/education" class="custom-button">
                 <span class="iconify" data-icon="mdi:school-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Обучение</span>
             </a>
-
             <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 0;" />
-
             <a href="/homework" class="customs-button">
                 <span class="iconify" data-icon="mdi:clipboard-check-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Задания</span>
             </a>
-
             <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 0;" />
-
-            <a href="/achievments" class="customs-button">
+            <a href="/achievements" class="customs-button">
                 <span class="iconify" data-icon="mdi:trophy-outline" style="font-size: 24px; vertical-align: middle;"></span>
                 <span style="font-family: Arial, sans-serif; font-size: 14px;">Достижения</span>
             </a>
-
         </div>
     </div>
 
     <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
-
         <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); flex: 1; display: flex; justify-content: center; align-items: center;">
-                Первый блок
-            </div>
-        </div>
+            <h3 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Курсы:</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; position: relative;">
+                    <div style="display: flex; gap: 10px;">
+                        <button @onclick="ShowInProgressCourses"
+                                class="custom-button-hover"
+                                style="@GetButtonStyle(InProgressCoursesSelected)">
+                            В процессе
+                        </button>
+                        <button @onclick="ShowCompletedCourses"
+                                class="custom-button-hover"
+                                style="@GetButtonStyle(CompletedCoursesSelected)">
+                            Пройденные
+                        </button>
+                        @if (UserRole == "Teacher")
+                        {
+                            <button @onclick="ShowMyCourses"
+                                    class="custom-button-hover"
+                                    style="@GetButtonStyle(MyCoursesSelected)">
+                                Мои курсы
+                            </button>
+                        }
+                    </div>
+                    @if (UserRole == "Teacher" && MyCoursesSelected)
+                    {
+                        <button @onclick="CreateCourse"
+                                style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                            Создать курс
+                        </button>
+                    }
+                </div>
 
-        <div style="background: #FAF6FF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: #FFFFFF; border-radius: 10px; padding: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); flex: 1; display: flex; justify-content: center; align-items: center;">
-                Второй блок
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    @if (FilteredCourses == null || !FilteredCourses.Any())
+                    {
+                        <div>Нет курсов для отображения.</div>
+                    }
+                    else
+                    {
+                        foreach (var userCourse in FilteredCourses)
+                        {
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                                <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                    @userCourse.ID_CourseNavigation.Name
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    @if (MyCoursesSelected)
+                                    {
+                                        @if (UserRole == "Teacher" && userCourse.Author)
+                                        {
+                                            <button @onclick="() => EditCourse(userCourse)"
+                                                    class="custom-button-hover"
+                                                    style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
+                                                Редактировать
+                                            </button>
+                                        }
+                                    }
+                                    @if (userCourse.Status)
+                                    {
+                                        <button @onclick="() => DownloadCertificate(userCourse)"
+                                                class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Скачать сертификат
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => SelectCourse(userCourse)"
+                                                class="custom-button-hover"
+                                                style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                            Выбрать
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
             </div>
+
+            @if (SelectedCourse != null)
+            {
+                    <h3 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Уроки:</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; position: relative;">
+                            <button @onclick="ShowInProgressLessons"
+                                    class="custom-button-hover"
+                                    style="@GetButtonStyle(InProgressLessonsSelected)">
+                                Текущие
+                            </button>
+                            <button @onclick="ShowCompletedLessons"
+                                    class="custom-button-hover"
+                                    style="@GetButtonStyle(CompletedLessonsSelected)">
+                                Пройденные
+                            </button>
+                            @if (UserRole == "Teacher" && MyCoursesSelected && SelectedCourse.Author)
+                            {
+                                <button @onclick="CreateLesson"
+                                        style="position: absolute; right: 0; background: #D1C4E9; color: black; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;">
+                                    Добавить урок
+                                </button>
+                            }
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            @if (FilteredLessons == null || !FilteredLessons.Any())
+                            {
+                                <div>Нет уроков для отображения.</div>
+                            }
+                            else
+                            {
+                                foreach (var userLesson in FilteredLessons.OrderBy(l => l.ID_LessonNavigation.Number))
+                                {
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; border-radius: 10px; padding: 10px 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+                                        <span style="font-family: Arial, sans-serif; font-size: 16px; font-weight: bold;">
+                                            @userLesson.ID_LessonNavigation.Name
+                                        </span>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button @onclick="() => NavigateToLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
+                                                    class="custom-button-hover"
+                                                    style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                                Перейти
+                                            </button>
+                                            @if (MyCoursesSelected && UserRole == "Teacher" && SelectedCourse.Author)
+                                            {
+                                                <button @onclick="() => EditLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
+                                                        class="custom-button-hover"
+                                                        style="background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: black;">
+                                                    Редактировать
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+            }
         </div>
     </div>
 </div>
+
+@code {
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private List<Users_Course> Courses;
+    private List<Users_Course> FilteredCourses;
+    private Users_Course SelectedCourse;
+
+    private List<Users_Lesson> Lessons;
+    private List<Users_Lesson> FilteredLessons;
+
+    private bool InProgressCoursesSelected { get; set; } = true;
+    private bool CompletedCoursesSelected { get; set; }
+    private bool InProgressLessonsSelected { get; set; } = true;
+    private bool CompletedLessonsSelected { get; set; }
+    private bool MyCoursesSelected { get; set; }
+
+    private string UserRole { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser != null)
+        {
+            UserRole = currentUser.Role;
+            Courses = await DbContext.Users_Courses
+                .Include(uc => uc.ID_CourseNavigation)
+                .Where(uc => uc.ID_User == currentUser.ID_User)
+                .ToListAsync();
+            FilteredCourses = Courses.Where(c => !c.Status).ToList();
+        }
+        else
+        {
+            Courses = new List<Users_Course>();
+            FilteredCourses = Courses;
+        }
+    }
+
+    private async Task SelectCourse(Users_Course course)
+    {
+        SelectedCourse = course;
+        CourseId = course.ID_Course;
+        Lessons = await DbContext.Users_Lessons
+            .Include(ul => ul.ID_LessonNavigation)
+            .Where(ul => ul.ID_User == CurrentUserService.GetCurrentUser().ID_User && ul.ID_LessonNavigation.ID_Course == course.ID_Course)
+            .OrderBy(ul => ul.ID_LessonNavigation.Number)
+            .ToListAsync();
+
+        FilteredLessons = GetSequentialLessons(Lessons);
+
+        ShowInProgressLessons();
+    }
+
+    private List<Users_Lesson> GetSequentialLessons(List<Users_Lesson> lessons)
+    {
+        var orderedLessons = lessons.OrderBy(l => l.ID_LessonNavigation.Number).ToList();
+        var filteredLessons = new List<Users_Lesson>();
+
+        foreach (var lesson in orderedLessons)
+        {
+            if (!lesson.Status)
+            {
+                filteredLessons.Add(lesson);
+                break;
+            }
+            else
+            {
+                filteredLessons.Add(lesson);
+            }
+        }
+
+        return filteredLessons;
+    }
+
+    private void ShowInProgressCourses()
+    {
+        InProgressCoursesSelected = true;
+        CompletedCoursesSelected = false;
+        FilteredCourses = Courses.Where(c => !c.Status).ToList();
+        MyCoursesSelected = false;
+    }
+
+    private void ShowCompletedCourses()
+    {
+        InProgressCoursesSelected = false;
+        CompletedCoursesSelected = true;
+        MyCoursesSelected = false;
+        FilteredCourses = Courses.Where(c => c.Status).ToList();
+    }
+
+    private void ShowInProgressLessons()
+    {
+        InProgressLessonsSelected = true;
+        CompletedLessonsSelected = false;
+        FilteredLessons = GetSequentialLessons(Lessons.Where(l => !l.Status).ToList());
+    }
+
+    private void ShowCompletedLessons()
+    {
+        InProgressLessonsSelected = false;
+        CompletedLessonsSelected = true;
+        FilteredLessons = Lessons.Where(l => l.Status).ToList();
+    }
+
+    private void ShowMyCourses()
+    {
+        InProgressCoursesSelected = false;
+        CompletedCoursesSelected = false;
+        MyCoursesSelected = true;
+        FilteredCourses = Courses.Where(c => c.Author).ToList();
+    }
+
+    private void NavigateToLesson(int lessonId)
+    {
+        NavigationManager.NavigateTo($"/lesson/{lessonId}");
+    }
+
+    private void CreateCourse()
+    {
+        NavigationManager.NavigateTo("/create-course");
+    }
+
+    private void CreateLesson()
+    {
+        Console.WriteLine($"CourseId: {CourseId}");
+
+        NavigationManager.NavigateTo($"/create-lesson/{CourseId}");
+    }
+
+    private void EditCourse(Users_Course userCourse)
+    {
+        NavigationManager.NavigateTo($"/edit-course/{userCourse.ID_Course}");
+    }
+
+    private void EditLesson(int lessonId)
+    {
+        NavigationManager.NavigateTo($"/edit-lesson/{lessonId}");
+    }
+
+    private string GetButtonStyle(bool isSelected)
+    {
+        return isSelected ? "background: #D1C4E9; border: none; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;" : "background: #FFFFFF; border: 1px solid #CCCCCC; border-radius: 20px; padding: 10px 20px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer;";
+
+    }
+
+    private async Task DownloadCertificate(Users_Course userCourse)
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+
+        if (currentUser != null)
+        {
+            var course = await DbContext.Courses.FindAsync(userCourse.ID_Course);
+
+            var teacher = await DbContext.Users_Courses
+                .Where(uc => uc.ID_Course == userCourse.ID_Course && uc.Author)
+                .Select(uc => uc.ID_UserNavigation)
+                .FirstOrDefaultAsync();
+
+
+            string userName = $"{currentUser.Surname} {currentUser.Name} {currentUser.MiddleName}".Trim();
+            string teacherName = teacher != null ? $"{teacher.Surname} {teacher.Name[0]}. {teacher.MiddleName[0]}." : "-";
+            string completionDate = DateTime.Now.ToString("dd.MM.yyyy");
+
+            using var bitmap = SKBitmap.Decode("wwwroot/Images/sample.png");
+            using var canvas = new SKCanvas(bitmap);
+
+        var paint = new SKPaint
+            {
+                TextSize = 14,
+                IsAntialias = true,
+                Color = SKColors.Black,
+                Typeface = SKTypeface.FromFamilyName("Arial")
+            };
+
+        var font = new SKFont(paint.Typeface, 14);
+        float startX = 350;
+        float startY = 270;
+        float lineSpacing = 50;
+
+            DrawText(canvas, "Настоящий сертификат подтверждает, что", startX, startY, SKTextAlign.Left, font, paint);
+            DrawText(canvas, userName, startX, startY + lineSpacing, SKTextAlign.Left, font, paint);
+            canvas.DrawLine(startX, startY + lineSpacing + 5, startX + 400, startY + lineSpacing + 5, paint);
+
+        DrawText(canvas, "Успешно прошел обучение на курсе", startX, startY + lineSpacing * 2, SKTextAlign.Left, font, paint);
+        DrawText(canvas, course.Name, startX, startY + lineSpacing * 3, SKTextAlign.Left, font, paint);
+        canvas.DrawLine(startX, startY + lineSpacing * 3 + 5, startX + 400, startY + lineSpacing * 3 + 5, paint);
+
+            DrawText(canvas, "Дата", startX, startY + lineSpacing * 4, SKTextAlign.Left, font, paint);
+            DrawText(canvas, completionDate, startX, startY + lineSpacing * 5, SKTextAlign.Left, font, paint);
+            canvas.DrawLine(startX, startY + lineSpacing * 5 + 5, startX + 200, startY + lineSpacing * 5 + 5, paint);
+
+            float teacherOffsetX = startX + 290;
+            DrawText(canvas, "Преподаватель курса", teacherOffsetX, startY + lineSpacing * 4, SKTextAlign.Left, font, paint);
+            DrawText(canvas, teacherName, teacherOffsetX, startY + lineSpacing * 5, SKTextAlign.Left, font, paint);
+            canvas.DrawLine(teacherOffsetX, startY + lineSpacing * 5 + 5, teacherOffsetX + 200, startY + lineSpacing * 5 + 5, paint);
+
+            using (var ms = new MemoryStream())
+            {
+                bitmap.Encode(ms, SKEncodedImageFormat.Png, 100);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                await JSRuntime.InvokeVoidAsync("downloadFileFromStream", "certificate.png", ms.ToArray());
+            }
+        }
+    }
+
+    private void DrawText(SKCanvas canvas, string text, float x, float y, SKTextAlign textAlign, SKFont font, SKPaint paint)
+    {
+        paint.TextAlign = textAlign;
+        canvas.DrawText(text, x, y, font, paint);
+    }
+
+}

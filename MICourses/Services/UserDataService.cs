@@ -17,15 +17,12 @@ namespace MICourses.Services
         /// </summary>
         /// <param name="loginOrEmail">Логин или Email пользователя</param>
         /// <param name="password">Пароль пользователя</param>
-        /// <returns>True, если пользователь авторизован, иначе false.</returns>
-        public async Task<User> AuthenticateUserAsync(string loginOrEmail, string password)
+        /// <returns>Пользователь, если данные корректны, иначе null.</returns>
+        public async Task<User?> AuthenticateUserAsync(string loginOrEmail, string password)
         {
-            var user = await _context.Users
+            return await _context.Users
                 .FirstOrDefaultAsync(u => (u.Login == loginOrEmail || u.Email == loginOrEmail) && u.Password == password);
-
-            return user; // Возвращаем пользователя, если логин и пароль корректны
         }
-
 
         /// <summary>
         /// Проверяет существование пользователя по логину или email.
@@ -36,6 +33,48 @@ namespace MICourses.Services
         {
             return await _context.Users
                 .AnyAsync(u => u.Login == loginOrEmail || u.Email == loginOrEmail);
+        }
+
+        /// <summary>
+        /// Проверяет существование пользователя по логину и email.
+        /// </summary>
+        /// <param name="login">Логин пользователя</param>
+        /// <param name="email">Email пользователя</param>
+        /// <returns>True, если пользователь существует, иначе false.</returns>
+        public async Task<bool> CheckUserExistsAsync(string login, string email)
+        {
+            return await _context.Users
+                .AnyAsync(u => u.Login == login || u.Email == email);
+        }
+
+        /// <summary>
+        /// Добавляет нового пользователя в базу данных.
+        /// </summary>
+        /// <param name="user">Объект пользователя</param>
+        public async Task AddUserAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Возвращает пользователя по логину.
+        /// </summary>
+        /// <param name="login">Логин пользователя</param>
+        /// <returns>Пользователь, если найден, иначе null.</returns>
+        public async Task<User?> GetUserByLoginAsync(string login)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Login == login);
+        }
+
+        /// <summary>
+        /// Добавляет достижение пользователю.
+        /// </summary>
+        /// <param name="userAchievement">Объект достижения пользователя</param>
+        public async Task AddUserAchievementAsync(Users_Achievment userAchievement)
+        {
+            _context.Users_Achievments.Add(userAchievement); // Исправлено: заменен _сontext на _context
+            await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,17 +95,5 @@ namespace MICourses.Services
 
             return user.Password == password;
         }
-
-        public async Task<bool> CheckUserExistsAsync(string login, string email)
-        {
-            return await _context.Users.AnyAsync(u => u.Login == login || u.Email == email);
-        }
-
-        public async Task AddUserAsync(User user)
-        {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-        }
-
     }
 }

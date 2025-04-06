@@ -2,6 +2,7 @@
 @inject UserDataService UserDataService
 @inject NavigationManager NavigationManager
 
+
 <div class="flex items-center justify-center h-screen">
     <div class="bg-white p-16 rounded shadow-md max-w-lg w-full">
         <h2 class="text-center mb-10" style="font-family: Arial; font-size: 2rem; font-weight: normal; white-space: nowrap;">Регистрация</h2>
@@ -79,6 +80,7 @@
 
     private async Task HandleRegister()
     {
+        // Сброс ошибок
         ErrorMessage = string.Empty;
         LoginErrorMessage = string.Empty;
         EmailErrorMessage = string.Empty;
@@ -86,6 +88,7 @@
 
         bool isValid = true;
 
+        // Валидация данных
         if (string.IsNullOrWhiteSpace(Login))
         {
             LoginErrorMessage = "Поле логин не может быть пустым.";
@@ -113,8 +116,7 @@
             PasswordErrorMessage = "Поле пароль не может быть пустым.";
             isValid = false;
         }
-        else if (Password.Length < 6 || Password.Length > 16 || 
-                 !System.Text.RegularExpressions.Regex.IsMatch(Password, @"(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$"))
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(Password, @"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,16}$"))
         {
             PasswordErrorMessage = "Пароль должен содержать от 6 до 16 символов, включая 1 заглавную букву, 1 цифру и 1 специальный символ.";
             isValid = false;
@@ -125,27 +127,51 @@
             return;
         }
 
-        var userExists = await UserDataService.CheckUserExistsAsync(Login, Email);
-        if (userExists)
+        try
         {
-            ErrorMessage = "Пользователь с таким логином или email уже существует.";
-            return;
+            // Проверка существования
+            var userExists = await UserDataService.CheckUserExistsAsync(Login, Email);
+            if (userExists)
+            {
+                ErrorMessage = "Пользователь с таким логином или email уже существует.";
+                return;
+            }
+
+            // Создание пользователя
+            var newUser = new User
+                {
+                    Login = Login,
+                    Email = Email,
+                    Password = Password,
+                    Role = "User",
+                    Lvl = 100
+                };
+
+            await UserDataService.AddUserAsync(newUser);
+
+            // Добавление достижения
+            var createdUser = await UserDataService.GetUserByLoginAsync(Login);
+            if (createdUser != null)
+            {
+                const int achievementId = 1;
+                var userAchievement = new Users_Achievment
+                    {
+                        ID_User = createdUser.ID_User,
+                        ID_Achievment = achievementId
+                    };
+                await UserDataService.AddUserAchievementAsync(userAchievement);
+            }
+
+            IsRegistrationSuccessful = true;
+
+            await Task.Delay(2000);
+            NavigationManager.NavigateTo("/authorization");
         }
-
-        var newUser = new User
+        catch (Exception ex)
         {
-            Login = Login,
-            Email = Email,
-            Password = Password,
-            Role = "User",
-            Lvl = 100
-        };
-
-        await UserDataService.AddUserAsync(newUser);
-
-        IsRegistrationSuccessful = true;
-
-        await Task.Delay(2000);
-        NavigationManager.NavigateTo("/authorization");
+            ErrorMessage = $"Ошибка регистрации: {ex.Message}";
+        }
     }
+
+
 }
