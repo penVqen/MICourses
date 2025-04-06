@@ -1,3 +1,4 @@
+using BlazorDownloadFile;
 using MICourses.Models;
 using MICourses.Services;
 using Microsoft.AspNetCore.Components;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddBlazorDownloadFile();
 
 
 builder.Services.AddDbContext<MIContext>(options =>

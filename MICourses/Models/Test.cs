@@ -23,6 +23,8 @@ public partial class Test
     [StringLength(1000)]
     public string Description { get; set; }
 
+    public bool? IsFinal { get; set; }
+
     [ForeignKey("ID_Lesson")]
     [InverseProperty("Tests")]
     public virtual Lesson ID_LessonNavigation { get; set; }

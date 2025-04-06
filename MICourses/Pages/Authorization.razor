@@ -1,11 +1,7 @@
 ﻿@page "/authorization"
-@using MICourses.Layout
-@using MICourses.Services
 @inject UserDataService UserDataService
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUserService
-
-<NavMenu />
 
 <div class="flex items-center justify-center h-screen">
     <div class="bg-white p-16 rounded shadow-md max-w-lg w-full">
@@ -91,7 +87,7 @@
             return;
         }
 
-        CurrentUserService.SetCurrentUser(user); // Устанавливаем текущего пользователя
+        CurrentUserService.SetCurrentUser(user);
         NavigationManager.NavigateTo("/profile");
     }
 }

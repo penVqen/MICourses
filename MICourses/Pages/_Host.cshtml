@@ -11,10 +11,24 @@
     <link href="css/site.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.iconify.design/2/2.1.2/iconify.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
 <body>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+    <script>
+        function downloadFileFromStream(fileName, fileData) {
+            var blob = new Blob([fileData], { type: 'application/octet-stream' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        }
+
+    </script>
+
+
 
     <script src="_framework/blazor.server.js"></script>
 </body>

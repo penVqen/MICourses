@@ -1,11 +1,7 @@
 ﻿@page "/"
-@using MICourses.Layout
-@using MICourses.Models
-@using MICourses.Services
 
 @inject CourseService CourseService
 
-<NavMenu />
 
 <div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px;">
     <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -52,7 +48,7 @@
             }
             else
             {
-                <p style="font-family: Arial, sans-serif;">Загрузка курсов...</p>
+                <p style="font-family: Arial, sans-serif;">Курсы не найдены</p>
             }
         </div>
     </div>
