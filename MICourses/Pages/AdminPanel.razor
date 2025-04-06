@@ -1,0 +1,114 @@
+﻿@page "/admin-panel"
+@inject MIContext DbContext
+
+<div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px; min-height: 100vh;">
+    <h1 class="text-4xl font-bold mb-8">Окно администратора. Просмотр и управление пользователями.</h1>
+
+    <!-- Панель фильтров -->
+    <div class="flex gap-4 mb-6">
+        <button @onclick="ShowAllUsers"
+                class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2 font-semibold transition duration-300"
+                style="background-color: #6366F1;">
+            <i class="fas fa-users"></i> Все
+        </button>
+        <button @onclick="ShowStudents"
+                class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2 font-semibold transition duration-300"
+                style="background-color: #6366F1;">
+            <i class="fas fa-user-graduate"></i> Ученики
+        </button>
+        <button @onclick="ShowTeachers"
+                class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2 font-semibold transition duration-300"
+                style="background-color: #6366F1;">
+            <i class="fas fa-chalkboard-teacher"></i> Преподаватели
+        </button>
+    </div>
+
+    <!-- Поисковая строка -->
+    <div class="mb-6">
+        <div class="relative flex items-center">
+            <input type="text" placeholder="Поиск по логину/почте" @bind="SearchQuery"
+                   class="w-full p-3 pl-4 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm"
+                   @onkeydown="HandleKeyDown" />
+            <button type="button" @onclick="ApplySearchFilter"
+                    class="p-3 bg-indigo-500 text-white rounded-r-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Список пользователей -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            @foreach (var user in FilteredUsers)
+            {
+                <UserCard User="user" />
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string SearchQuery { get; set; } = string.Empty;
+
+    private List<User> AllUsers { get; set; } = new();
+    private List<User> FilteredUsers { get; set; } = new();
+
+    private string CurrentFilter { get; set; } = "All";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AllUsers = await DbContext.Users.ToListAsync();
+        FilteredUsers = AllUsers;
+    }
+
+    private void ApplySearchFilter()
+    {
+        var filteredByRole = CurrentFilter switch
+        {
+            "User" => AllUsers.Where(u => u.Role == "User"),
+            "Teacher" => AllUsers.Where(u => u.Role == "Teacher"),
+            _ => AllUsers
+        };
+
+        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            FilteredUsers = filteredByRole
+                .Where(u =>
+                    u.Login.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    u.Email.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        else
+        {
+            FilteredUsers = filteredByRole.ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private void ShowAllUsers()
+    {
+        CurrentFilter = "All";
+        ApplySearchFilter();
+    }
+
+    private void ShowStudents()
+    {
+        CurrentFilter = "User";
+        ApplySearchFilter();
+    }
+
+    private void ShowTeachers()
+    {
+        CurrentFilter = "Teacher";
+        ApplySearchFilter();
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplySearchFilter();
+        }
+    }
+}

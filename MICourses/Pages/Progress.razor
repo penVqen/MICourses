@@ -1,0 +1,81 @@
+﻿@page "/progress"
+@inject CurrentUserService CurrentUserService
+@inject MIContext DbContext
+@inject NavigationManager NavigationManager
+
+<div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px; min-height: 100vh;">
+    <h1 class="text-4xl font-bold mb-8">Прогресс прохождения курсов</h1>
+
+    @if (UserCourses == null || UserCourses.Count == 0)
+    {
+        <p class="text-gray-600">Вы пока не записаны ни на один курс.</p>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var userCourse in UserCourses)
+            {
+                var course = Courses.FirstOrDefault(c => c.ID_Course == userCourse.ID_Course);
+                if (course != null)
+                {
+                    // Используем предварительно рассчитанный прогресс
+                    int progress = ProgressByCourse[course.ID_Course];
+                    <CourseCard Course="course" Progress="@progress" ShowProgress="true" ShowEnrollButton="false" />
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Users_Course> UserCourses { get; set; }
+    private List<Course> Courses { get; set; }
+    private Dictionary<int, int> ProgressByCourse { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser == null)
+        {
+            NavigationManager.NavigateTo("/authorization");
+            return;
+        }
+
+        // Загрузка курсов пользователя
+        UserCourses = await DbContext.Users_Courses
+            .Where(uc => uc.ID_User == currentUser.ID_User)
+            .ToListAsync();
+
+        // Загрузка всех курсов
+        Courses = await DbContext.Courses.ToListAsync();
+
+        // Рассчитываем прогресс для каждого курса
+        foreach (var course in Courses)
+        {
+            int progress = await CalculateProgressAsync(currentUser.ID_User, course.ID_Course);
+            ProgressByCourse[course.ID_Course] = progress;
+        }
+    }
+
+    private async Task<int> CalculateProgressAsync(int userId, int courseId)
+    {
+        // Получаем все уроки для курса
+        var lessons = await DbContext.Lessons
+            .Where(l => l.ID_Course == courseId)
+            .ToListAsync();
+
+        if (lessons.Count == 0)
+        {
+            return 0; // Если уроков нет, прогресс равен 0%
+        }
+
+        // Получаем завершенные уроки пользователя
+        var completedLessons = await DbContext.Users_Lessons
+            .CountAsync(ul => ul.ID_User == userId && ul.Status && lessons.Select(l => l.ID_Lesson).Contains(ul.ID_Lesson));
+
+        // Рассчитываем прогресс
+        int progress = (int)((double)completedLessons / lessons.Count * 100);
+
+        return progress;
+    }
+}

@@ -3,11 +3,9 @@
 @inject MIContext DbContext
 @inject NavigationManager NavigationManager
 
-
 <div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px; min-height: 100vh;">
     <div style="width: 100%; margin-top: 12px;">
         <h1 class="text-4xl font-bold mb-8">Личная информация</h1>
-
         <div class="bg-white rounded-lg shadow-md p-6" style="width: 100%;">
             <form>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -65,7 +63,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="flex gap-4 mt-6">
                     @if (IsReadOnly)
                     {
@@ -91,6 +88,18 @@
             </form>
         </div>
 
+        <!-- Плашка прогресса курсов -->
+        <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+            <h2 class="text-lg font-bold">Прогресс прохождения курсов</h2>
+            <p class="text-sm text-gray-600">Просмотр вашего прогресса по всем курсам.</p>
+            <button type="button" @onclick="NavigateToProgress"
+                    class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    style="background-color: rgb(178, 146, 215);">
+                Открыть прогресс курсов
+            </button>
+        </div>
+
+        <!-- Плашка удаления профиля -->
         <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
             <h2 class="text-lg font-bold">Удаление профиля</h2>
             <p class="text-sm text-gray-600">После нажатия кнопки 'Удалить профиль' все ваши данные будут безвозвратно удалены.</p>
@@ -100,9 +109,24 @@
                 Удалить профиль
             </button>
         </div>
-    </div>
-</div>
 
+        <!-- Плашка окна администратора -->
+        <!-- Плашка окна администратора -->
+        @if (IsAdmin)
+        {
+            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+                <h2 class="text-lg font-bold">Окно администратора</h2>
+                <p class="text-sm text-gray-600">Просмотр и управление пользователями.</p>
+                <button type="button" @onclick="NavigateToAdminPanel"
+                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        style="background-color: rgb(178, 146, 215);">
+                    Открыть окно администратора
+                </button>
+            </div>
+        }
+        </div>
+    </div>
+<!-- Модальное окно подтверждения удаления -->
 @if (IsDeleteDialogOpen)
 {
     <div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
@@ -129,6 +153,7 @@
     private bool IsReadOnly { get; set; } = true;
     private string SurnameError, NameError, MiddleNameError, BirthdayError, PhoneNumberError;
     private bool IsDeleteDialogOpen = false;
+    private bool IsAdmin { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,6 +163,9 @@
             NavigationManager.NavigateTo("/authorization");
             return;
         }
+
+        // Проверка роли пользователя
+        IsAdmin = currentUser.Role == "Administrator";
 
         OriginalUser = await DbContext.Users.FindAsync(currentUser.ID_User);
         EditableUser = new User
@@ -151,7 +179,6 @@
                 Sex = OriginalUser.Sex
             };
     }
-
     private void EnableEditing()
     {
         IsReadOnly = false;
@@ -167,7 +194,6 @@
         {
             return;
         }
-
         var userToUpdate = await DbContext.Users.FindAsync(EditableUser.ID_User);
         if (userToUpdate != null)
         {
@@ -177,7 +203,6 @@
             userToUpdate.Birthday = EditableUser.Birthday;
             userToUpdate.PhoneNumber = EditableUser.PhoneNumber;
             userToUpdate.Sex = EditableUser.Sex;
-
             await DbContext.SaveChangesAsync();
             OriginalUser = new User
                 {
@@ -189,11 +214,9 @@
                     PhoneNumber = userToUpdate.PhoneNumber,
                     Sex = userToUpdate.Sex
                 };
-
             IsReadOnly = true;
         }
     }
-
 
     private void CancelChanges()
     {
@@ -208,13 +231,21 @@
                 PhoneNumber = OriginalUser.PhoneNumber,
                 Sex = OriginalUser.Sex
             };
-
         SurnameError = null;
         NameError = null;
         MiddleNameError = null;
         BirthdayError = null;
         PhoneNumberError = null;
+    }
 
+    private void NavigateToProgress()
+    {
+        NavigationManager.NavigateTo("/progress");
+    }
+
+    private void NavigateToAdminPanel()
+    {
+        NavigationManager.NavigateTo("/admin-panel");
     }
 
     private async Task DeleteProfile()
@@ -274,7 +305,6 @@
         }
     }
 
-
     private void ValidateBirthday()
     {
         if (EditableUser.Birthday.HasValue)
@@ -321,7 +351,6 @@
     private async Task ConfirmDelete()
     {
         IsDeleteDialogOpen = false;
-
         var userToDelete = await DbContext.Users.FindAsync(OriginalUser.ID_User);
         if (userToDelete != null)
         {
