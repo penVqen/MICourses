@@ -1,0 +1,21 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="chart-container">
+    <canvas id="@CanvasId"></canvas>
+</div>
+
+@code {
+    [Parameter]
+    public string CanvasId { get; set; } = "chartCanvas";
+
+    [Parameter]
+    public ChartConfiguration Configuration { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Configuration != null)
+        {
+            await JSRuntime.InvokeVoidAsync("createChart", CanvasId, Configuration);
+        }
+    }
+}
