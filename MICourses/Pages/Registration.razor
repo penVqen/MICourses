@@ -1,7 +1,11 @@
-﻿@page "/registration"
+@page "/registration"
+@using MICourses.Models
+@using MICourses.Layout
+@using MICourses.Services
 @inject UserDataService UserDataService
 @inject NavigationManager NavigationManager
 
+<NavMenu />
 
 <div class="flex items-center justify-center h-screen">
     <div class="bg-white p-16 rounded shadow-md max-w-lg w-full">
@@ -15,7 +19,7 @@
         }
         else
         {
-            <form class="space-y-10" @onsubmit="HandleRegister">
+            <form class="space-y-6" @onsubmit="HandleRegister">
                 <div>
                     <input type="text" @bind="Login" placeholder="Введите логин"
                            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg" />
@@ -44,10 +48,23 @@
                     <p class="mt-2 text-sm text-gray-500">Не менее 6 символов, включая 1 цифру, 1 заглавную букву и 1 специальный символ.</p>
                 </div>
 
+                <!-- Чекбокс с правилами -->
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" @bind="IsRulesAccepted" id="rules-checkbox" class="h-5 w-5 text-purple-600" />
+                    <label for="rules-checkbox" class="text-sm text-gray-700">
+                        Подтверждаю, что ознакомлен
+                        <button type="button" @onclick="ShowRulesModal" class="text-purple-500 hover:underline">
+                            с правилами портала
+                        </button>
+                    </label>
+                </div>
+
+                <!-- Кнопка регистрации -->
                 <div>
                     <button type="submit"
                             class="w-full text-white py-3 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-                            style="background-color: rgb(178, 146, 215); font-size: 1.2rem;">
+                            style="background-color: rgb(178, 146, 215); font-size: 1.2rem;"
+                            disabled="@(!IsRulesAccepted)">
                         Зарегистрироваться
                     </button>
                 </div>
@@ -66,6 +83,69 @@
     </div>
 </div>
 
+@if (IsRulesModalOpen)
+{
+    <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl mx-auto relative overflow-hidden"
+             style="border: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(145deg, #ffffff, #f0f0f0);">
+            <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center"
+                style="letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                Правила портала
+            </h3>
+
+            <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                Добро пожаловать на наш образовательный портал! Пожалуйста, ознакомьтесь с основными правилами:
+            </p>
+
+            <ul class="space-y-4">
+                <li class="flex items-start">
+                    <span class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                    <span class="text-gray-700 text-lg">Будьте вежливы и уважайте других участников портала.</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                    <span class="text-gray-700 text-lg">Не размещайте запрещенный контент, а также контент, нарушающий авторские права.</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                    <span class="text-gray-700 text-lg">Соблюдайте сроки выполнения заданий и тестов.</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                    <span class="text-gray-700 text-lg">Не распространяйте личные данные других пользователей.</span>
+                </li>
+            </ul>
+
+            <p class="mt-6 text-red-500 text-lg font-semibold">
+                В случае несоблюдения правил портала ваш аккаунт может быть заблокирован.
+            </p>
+
+            <div class="flex justify-end mt-8">
+                <button @onclick="CloseRulesModal"
+                        class="py-3 px-6 bg-indigo-600 text-white rounded-full text-lg font-medium hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private string Login { get; set; } = string.Empty;
     private string Email { get; set; } = string.Empty;
@@ -76,11 +156,12 @@
     private string EmailErrorMessage { get; set; }
     private string PasswordErrorMessage { get; set; }
     private bool IsRegistrationSuccessful { get; set; } = false;
-    private string SuccessMessage { get; set; }
+
+    private bool IsRulesModalOpen { get; set; } = false;
+    private bool IsRulesAccepted { get; set; } = false;
 
     private async Task HandleRegister()
     {
-        // Сброс ошибок
         ErrorMessage = string.Empty;
         LoginErrorMessage = string.Empty;
         EmailErrorMessage = string.Empty;
@@ -88,7 +169,6 @@
 
         bool isValid = true;
 
-        // Валидация данных
         if (string.IsNullOrWhiteSpace(Login))
         {
             LoginErrorMessage = "Поле логин не может быть пустым.";
@@ -116,7 +196,8 @@
             PasswordErrorMessage = "Поле пароль не может быть пустым.";
             isValid = false;
         }
-        else if (!System.Text.RegularExpressions.Regex.IsMatch(Password, @"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,16}$"))
+        else if (Password.Length < 6 || Password.Length > 16 ||
+                 !System.Text.RegularExpressions.Regex.IsMatch(Password, @"(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$"))
         {
             PasswordErrorMessage = "Пароль должен содержать от 6 до 16 символов, включая 1 заглавную букву, 1 цифру и 1 специальный символ.";
             isValid = false;
@@ -127,51 +208,37 @@
             return;
         }
 
-        try
+        var userExists = await UserDataService.CheckUserExistsAsync(Login, Email);
+        if (userExists)
         {
-            // Проверка существования
-            var userExists = await UserDataService.CheckUserExistsAsync(Login, Email);
-            if (userExists)
-            {
-                ErrorMessage = "Пользователь с таким логином или email уже существует.";
-                return;
-            }
-
-            // Создание пользователя
-            var newUser = new User
-                {
-                    Login = Login,
-                    Email = Email,
-                    Password = Password,
-                    Role = "User",
-                    Lvl = 100
-                };
-
-            await UserDataService.AddUserAsync(newUser);
-
-            // Добавление достижения
-            var createdUser = await UserDataService.GetUserByLoginAsync(Login);
-            if (createdUser != null)
-            {
-                const int achievementId = 1;
-                var userAchievement = new Users_Achievment
-                    {
-                        ID_User = createdUser.ID_User,
-                        ID_Achievment = achievementId
-                    };
-                await UserDataService.AddUserAchievementAsync(userAchievement);
-            }
-
-            IsRegistrationSuccessful = true;
-
-            await Task.Delay(2000);
-            NavigationManager.NavigateTo("/authorization");
+            ErrorMessage = "Пользователь с таким логином или email уже существует.";
+            return;
         }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Ошибка регистрации: {ex.Message}";
-        }
+
+        var newUser = new User
+            {
+                Login = Login,
+                Email = Email,
+                Password = Password,
+                Role = "User",
+                Lvl = 100
+            };
+
+        await UserDataService.AddUserAsync(newUser);
+
+        IsRegistrationSuccessful = true;
+
+        await Task.Delay(2000);
+        NavigationManager.NavigateTo("/authorization");
     }
 
+    private void ShowRulesModal()
+    {
+        IsRulesModalOpen = true;
+    }
 
+    private void CloseRulesModal()
+    {
+        IsRulesModalOpen = false;
+    }
 }
