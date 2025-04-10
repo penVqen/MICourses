@@ -1,0 +1,269 @@
+﻿@page "/teacher-panel"
+@inject MIContext DbContext
+@inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
+@using MICourses.Models
+
+<div class="container" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 150px; min-height: 100vh;">
+    <h1 class="text-4xl font-bold mb-8">Панель преподавателя</h1>
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-bold mb-4">Мои курсы</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название курса</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Язык программирования</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach (var course in TeacherCourses)
+                {
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">@course.Name</td>
+                        <td class="px-6 py-4 whitespace-nowrap">@course.Description</td>
+                        <td class="px-6 py-4 whitespace-nowrap">@course.Language</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button type="button" @onclick="() => ShowLessons(course)"
+                                    class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 mr-2"
+                                    style="background-color: rgb(178, 146, 215);">
+                                Показать все уроки
+                            </button>
+                            <button type="button" @onclick="() => ShowTests(course)"
+                                    class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    style="background-color: rgb(178, 146, 215);">
+                                Показать все тесты
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Таблица уроков -->
+    @if (SelectedCourse != null && ShowLessonsTable)
+    {
+        <div class="mt-10 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-bold mb-4">Уроки курса: @SelectedCourse.Name</h2>
+            <div class="mb-4">
+                <input type="text" placeholder="Фильтр по названию" @bind="LessonNameFilter" @oninput="ApplyFilters" class="border border-gray-300 rounded-md px-3 py-2 w-full" />
+            </div>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название урока</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var lesson in FilteredLessons)
+                    {
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">@lesson.Name</td>
+                            <td class="px-6 py-4 whitespace-nowrap">@lesson.Description</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button type="button" @onclick="() => NavigateToLesson(lesson.ID_Lesson)"
+                                        class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        style="background-color: rgb(178, 146, 215);">
+                                    Просмотреть содержимое
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button @onclick="GoBackToCourses" class="mt-4 text-gray-500 hover:text-gray-700">
+                ← Назад к курсам
+            </button>
+        </div>
+    }
+
+    <!-- Таблица тестов -->
+    @if (SelectedCourse != null && ShowTestsTable)
+    {
+        <div class="mt-10 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-bold mb-4">Результаты тестов курса: @SelectedCourse.Name</h2>
+            <div class="mb-4">
+                <select @bind="SelectedUserFilter" class="border border-gray-300 rounded-md px-3 py-2 w-full mb-2">
+                    <option value="">Все пользователи</option>
+                    @foreach (var user in AllUsers)
+                    {
+                        <option value="@user.ID_User">@user.Name @user.Surname</option>
+                    }
+                </select>
+                <select @bind="SelectedScoreFilter" class="border border-gray-300 rounded-md px-3 py-2 w-full mb-2">
+                    <option value="">Все оценки</option>
+                    @for (int score = 3; score <= 5; score++)
+                    {
+                        <option value="@score">@score</option>
+                    }
+                </select>
+                <input type="text" placeholder="Фильтр по названию теста" @bind="TestNameFilter" @oninput="ApplyFilters" class="border border-gray-300 rounded-md px-3 py-2 w-full" />
+            </div>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Пользователь</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тест</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Результат</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var testResult in FilteredTestResults)
+                    {
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">@testResult.ID_UserNavigation?.Name @testResult.ID_UserNavigation?.Surname</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if (testResult.ID_TestNavigation != null)
+                                {
+                                    @testResult.ID_TestNavigation.Name
+                                }
+                                else
+                                {
+                                    <span>Название теста недоступно</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @{
+                                    int score = testResult.Score ?? 0;
+                                    <span>@score / 5</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button @onclick="GoBackToCourses" class="mt-4 text-gray-500 hover:text-gray-700">
+                ← Назад к курсам
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Course> TeacherCourses { get; set; } = new();
+    private Course SelectedCourse { get; set; }
+    private bool ShowLessonsTable { get; set; } = false;
+    private bool ShowTestsTable { get; set; } = false;
+    private List<Users_Test> TestResults { get; set; } = new();
+    private List<MICourses.Models.Lesson> Lessons { get; set; } = new();
+    private List<User> AllUsers { get; set; } = new();
+
+    // Фильтры
+    private string LessonNameFilter { get; set; } = string.Empty;
+    private string TestNameFilter { get; set; } = string.Empty;
+    private int? SelectedUserFilter { get; set; } = null;
+    private int? SelectedScoreFilter { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser == null || currentUser.Role != "Teacher")
+        {
+            NavigationManager.NavigateTo("/profile");
+            return;
+        }
+
+        var userCourses = await DbContext.Users_Courses
+            .Where(uc => uc.ID_User == currentUser.ID_User && uc.Author)
+            .Select(uc => uc.ID_CourseNavigation)
+            .ToListAsync();
+        TeacherCourses = userCourses;
+
+        AllUsers = await DbContext.Users.Where(u => u.Role == "User").ToListAsync();
+    }
+
+    private async Task ShowLessons(Course course)
+    {
+        SelectedCourse = course;
+        ShowLessonsTable = true;
+        ShowTestsTable = false;
+
+        Lessons = await DbContext.Lessons
+            .Where(l => l.ID_Course == course.ID_Course)
+            .ToListAsync();
+    }
+
+    private async Task ShowTests(Course course)
+    {
+        SelectedCourse = course;
+        ShowTestsTable = true;
+        ShowLessonsTable = false;
+
+        var testsInCourse = await DbContext.Tests
+            .Where(t => t.ID_LessonNavigation.ID_Course == course.ID_Course)
+            .Select(t => t.ID_Test)
+            .ToListAsync();
+
+        TestResults = await DbContext.Users_Tests
+            .Include(ut => ut.ID_UserNavigation)
+            .Include(ut => ut.ID_TestNavigation)
+            .Where(ut => testsInCourse.Contains(ut.ID_Test))
+            .ToListAsync();
+    }
+
+    private IEnumerable<MICourses.Models.Lesson> FilteredLessons =>
+        Lessons?
+            .Where(l =>
+                (string.IsNullOrEmpty(LessonNameFilter) || l.Name.Contains(LessonNameFilter, StringComparison.OrdinalIgnoreCase)))
+            ?? Enumerable.Empty<MICourses.Models.Lesson>();
+
+    private IEnumerable<Users_Test> FilteredTestResults =>
+        TestResults?
+            .Where(t =>
+                (!SelectedUserFilter.HasValue || t.ID_User == SelectedUserFilter.Value) &&
+                (!SelectedScoreFilter.HasValue || t.Score == SelectedScoreFilter.Value) &&
+                (string.IsNullOrEmpty(TestNameFilter) || t.ID_TestNavigation?.Name.Contains(TestNameFilter, StringComparison.OrdinalIgnoreCase) == true))
+            ?? Enumerable.Empty<Users_Test>();
+
+    private void ApplyFilters()
+    {
+        StateHasChanged();
+    }
+
+    private void NavigateToLesson(int lessonId)
+    {
+        NavigationManager.NavigateTo($"/lesson/{lessonId}");
+    }
+
+    private void GoBackToCourses()
+    {
+        ShowLessonsTable = false;
+        ShowTestsTable = false;
+        SelectedCourse = null;
+    }
+
+    private MarkupString HtmlContentWithLink(string content)
+    {
+        // Регулярное выражение для поиска обычных ссылок
+        var urlRegex = new System.Text.RegularExpressions.Regex(@"https?:\/\/[^\s]+");
+        var matches = urlRegex.Matches(content);
+        if (matches.Count > 0)
+        {
+            foreach (System.Text.RegularExpressions.Match match in matches)
+            {
+                var url = match.Value;
+                // Заменяем ссылку на HTML-гиперссылку с текстом "ссылка"
+                content = content.Replace(url, $"<a href=\"{url}\" target=\"_blank\" style=\"color: #1e90ff; font-weight: bold; text-decoration: underline;\">ссылка</a>");
+            }
+        }
+
+        // Регулярное выражение для поиска iframe
+        var iframeRegex = new System.Text.RegularExpressions.Regex(@"<iframe[^>]+src=""([^""]+)""[^>]*>(.*?)<\/iframe>",
+            System.Text.RegularExpressions.RegexOptions.Singleline);
+        var iframeMatches = iframeRegex.Matches(content);
+        if (iframeMatches.Count > 0)
+        {
+            foreach (System.Text.RegularExpressions.Match match in iframeMatches)
+            {
+                var iframeSrc = match.Groups[1].Value; // Извлекаем src из iframe
+                                                       // Заменяем весь iframe на кликабельную ссылку
+                content = content.Replace(match.Value, $"<a href=\"{iframeSrc}\" target=\"_blank\" style=\"color: #1e90ff; font-weight: bold; text-decoration: underline;\">ссылка</a>");
+            }
+        }
+        return new MarkupString(content);
+    }
+}

@@ -88,6 +88,7 @@
             </form>
         </div>
 
+        <!-- Плашка прогресса курсов -->
         <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
             <h2 class="text-lg font-bold">Прогресс прохождения курсов</h2>
             <p class="text-sm text-gray-600">Просмотр вашего прогресса по всем курсам.</p>
@@ -98,6 +99,21 @@
             </button>
         </div>
 
+        <!-- Плашка панели преподавателя -->
+        @if (IsTeacher)
+        {
+            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+                <h2 class="text-lg font-bold">Панель преподавателя</h2>
+                <p class="text-sm text-gray-600">Просмотр и управление курсами, которые вы ведете.</p>
+                <button type="button" @onclick="NavigateToTeacherPanel"
+                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        style="background-color: rgb(178, 146, 215);">
+                    Открыть панель преподавателя
+                </button>
+            </div>
+        }
+
+        <!-- Плашка удаления профиля -->
         <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
             <h2 class="text-lg font-bold">Удаление профиля</h2>
             <p class="text-sm text-gray-600">После нажатия кнопки 'Удалить профиль' все ваши данные будут безвозвратно удалены.</p>
@@ -108,6 +124,7 @@
             </button>
         </div>
 
+        <!-- Плашка окна администратора -->
         @if (IsAdmin)
         {
             <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
@@ -119,49 +136,30 @@
                     Открыть окно администратора
                 </button>
             </div>
-
-            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
-                <h2 class="text-lg font-bold">Управление курсами</h2>
-                <p class="text-sm text-gray-600">Просмотр и управление всеми курсами.</p>
-                <button type="button" @onclick="NavigateToCourseManagement"
-                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        style="background-color: rgb(178, 146, 215);">
-                    Открыть управление курсами
-                </button>
-            </div>
-
-            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
-                <h2 class="text-lg font-bold">Аналитика по порталу</h2>
-                <p class="text-sm text-gray-600">Просмотр статистики пользователей и активности.</p>
-                <button type="button" @onclick="NavigateToAnalytics"
-                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        style="background-color: rgb(178, 146, 215);">
-                    Открыть аналитику
-                </button>
-            </div>
         }
     </div>
-</div>
 
-@if (IsDeleteDialogOpen)
-{
-    <div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-        <div class="bg-white rounded-lg shadow-lg p-6 w-1/3">
-            <h3 class="text-lg font-semibold">Вы уверены?</h3>
-            <p class="mt-4 text-sm text-gray-600">Вы уверены, что хотите продолжить?</p>
-            <div class="flex justify-end gap-4 mt-6">
-                <button @onclick="ConfirmDelete"
-                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                    Да
-                </button>
-                <button @onclick="CancelDelete"
-                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                    Нет
-                </button>
+    <!-- Модальное окно подтверждения удаления -->
+    @if (IsDeleteDialogOpen)
+    {
+        <div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+            <div class="bg-white rounded-lg shadow-lg p-6 w-1/3">
+                <h3 class="text-lg font-semibold">Вы уверены?</h3>
+                <p class="mt-4 text-sm text-gray-600">Вы уверены, что хотите продолжить?</p>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button @onclick="ConfirmDelete"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Да
+                    </button>
+                    <button @onclick="CancelDelete"
+                            class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Нет
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-}
+    }
+</div>
 
 @code {
     private User EditableUser { get; set; }
@@ -171,6 +169,8 @@
     private bool IsDeleteDialogOpen = false;
     private bool IsAdmin { get; set; }
 
+    private bool IsTeacher { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
@@ -179,7 +179,11 @@
             NavigationManager.NavigateTo("/authorization");
             return;
         }
+
+        // Проверка роли пользователя
         IsAdmin = currentUser.Role == "Administrator";
+        IsTeacher = currentUser.Role == "Teacher";
+
         OriginalUser = await DbContext.Users.FindAsync(currentUser.ID_User);
         EditableUser = new User
             {
@@ -192,7 +196,6 @@
                 Sex = OriginalUser.Sex
             };
     }
-
     private void EnableEditing()
     {
         IsReadOnly = false;
@@ -257,19 +260,14 @@
         NavigationManager.NavigateTo("/progress");
     }
 
+    private void NavigateToTeacherPanel()
+    {
+        NavigationManager.NavigateTo("/teacher-panel");
+    }
+
     private void NavigateToAdminPanel()
     {
         NavigationManager.NavigateTo("/admin-panel");
-    }
-
-    private void NavigateToCourseManagement()
-    {
-        NavigationManager.NavigateTo("/course-management");
-    }
-
-    private void NavigateToAnalytics()
-    {
-        NavigationManager.NavigateTo("/analytics");
     }
 
     private async Task DeleteProfile()
