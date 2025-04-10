@@ -1,21 +1,53 @@
-﻿@inject IJSRuntime JSRuntime
+﻿@implements IAsyncDisposable
 
-<div class="chart-container">
+<div style="position: relative; height: 300px; width: 100%;">
     <canvas id="@CanvasId"></canvas>
 </div>
 
 @code {
-    [Parameter]
-    public string CanvasId { get; set; } = "chartCanvas";
+    [Parameter] public string CanvasId { get; set; } = Guid.NewGuid().ToString();
+    [Parameter] public object? Configuration { get; set; }
 
-    [Parameter]
-    public ChartConfiguration Configuration { get; set; }
+    private IJSObjectReference? _chartInstance;
+    private IJSObjectReference? _chartModule;
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && Configuration != null)
+        // Удалим диаграмму, если она уже была
+        if (_chartInstance != null)
         {
-            await JSRuntime.InvokeVoidAsync("createChart", CanvasId, Configuration);
+            await _chartInstance.InvokeVoidAsync("destroy");
+            await _chartInstance.DisposeAsync();
+            _chartInstance = null;
         }
+
+        if (Configuration != null)
+        {
+            _chartModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./js/chartHelpers.js");
+
+            _chartInstance = await _chartModule.InvokeAsync<IJSObjectReference>(
+                "createChart", new object[] { CanvasId, Configuration });
+        }
+    }
+
+    public async Task Refresh()
+    {
+        if (_chartInstance != null)
+            await _chartInstance.InvokeVoidAsync("update");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_chartInstance != null)
+        {
+            await _chartInstance.InvokeVoidAsync("destroy");
+            await _chartInstance.DisposeAsync();
+        }
+
+        if (_chartModule != null)
+            await _chartModule.DisposeAsync();
     }
 }

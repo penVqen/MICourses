@@ -1,37 +1,101 @@
 ﻿@page "/analytics"
 @inject MIContext DbContext
+@inject IJSRuntime JSRuntime
+@inject CurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
 
 <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Аналитика по порталу</h1>
+    <h1 class="text-4xl font-bold text-center text-indigo-800 mb-8">
+        @if (IsAdmin)
+        {
+            <span>Аналитика по порталу</span>
+        }
+        else if (IsTeacher)
+        {
+            <span>Аналитика преподавателя</span>
+        }
+    </h1>
 
-    <!-- Графики: Количество пользователей и распределение ролей -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- График: Количество пользователей -->
-        <div>
-            <h2 class="text-xl font-semibold mb-4">Количество пользователей</h2>
-            <ChartComponent CanvasId="userCountChart" Configuration="_userCountChartConfig" />
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Диаграммы для администратора -->
+        @if (IsAdmin)
+        {
+            <!-- Количество пользователей -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Количество пользователей</h2>
+                <ChartComponent @ref="_userCountChart" CanvasId="userCountChart" Configuration="_userCountChartConfig" />
+            </div>
 
-        <!-- График: Распределение ролей -->
-        <div>
-            <h2 class="text-xl font-semibold mb-4">Распределение ролей пользователей</h2>
-            <ChartComponent CanvasId="roleDistributionChart" Configuration="_roleDistributionChartConfig" />
-        </div>
+            <!-- Распределение ролей -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Распределение ролей пользователей</h2>
+                <ChartComponent @ref="_roleDistributionChart" CanvasId="roleDistributionChart" Configuration="_roleDistributionChartConfig" />
+            </div>
+        }
+
+        <!-- Диаграммы для преподавателя -->
+        @if (IsTeacher)
+        {
+            <!-- Столбчатая диаграмма: Мои курсы и студенты -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Мои курсы и студенты</h2>
+                <ChartComponent @ref="_courseStudentChart" CanvasId="courseStudentChart" Configuration="_courseStudentChartConfig" />
+            </div>
+
+            <!-- Круговая диаграмма: Распределение студентов по курсам -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Распределение студентов по курсам</h2>
+                <ChartComponent @ref="_studentDistributionChart" CanvasId="studentDistributionChart" Configuration="_studentDistributionChartConfig" />
+            </div>
+        }
     </div>
 </div>
 
 @code {
+    private ChartComponent _userCountChart;
+    private ChartComponent _roleDistributionChart;
+    private ChartComponent _courseStudentChart;
+    private ChartComponent _studentDistributionChart;
+
     private ChartConfiguration _userCountChartConfig;
     private ChartConfiguration _roleDistributionChartConfig;
+    private ChartConfiguration _courseStudentChartConfig;
+    private ChartConfiguration _studentDistributionChartConfig;
+
+    private bool IsAdmin { get; set; }
+    private bool IsTeacher { get; set; }
 
     protected override async Task OnInitializedAsync()
+    {
+        var currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser == null)
+        {
+            NavigationManager.NavigateTo("/authorization");
+            return;
+        }
+
+        // Проверка роли пользователя
+        IsAdmin = currentUser.Role == "Administrator";
+        IsTeacher = currentUser.Role == "Teacher";
+
+        if (IsAdmin)
+        {
+            await LoadAdminAnalytics();
+        }
+        else if (IsTeacher)
+        {
+            await LoadTeacherAnalytics(currentUser.ID_User);
+        }
+    }
+
+    private async Task LoadAdminAnalytics()
     {
         var users = await DbContext.Users.ToListAsync();
         int totalUsers = users.Count;
         int teacherCount = users.Count(u => u.Role == "Teacher");
         int studentCount = users.Count(u => u.Role == "User");
 
-        // Настройка графика количества пользователей
+        // График количества пользователей
         _userCountChartConfig = new ChartConfiguration
             {
                 Type = "bar",
@@ -44,27 +108,49 @@
                     {
                         Label = "Количество",
                         Data = new List<double> { totalUsers },
-                        BackgroundColor = "#74c0fc",
-                        BorderColor = "#4dabf7"
+                        BackgroundColor = "#63b3ed",
+                        BorderColor = "#4a90e2",
+                        BorderWidth = 2
                     }
                 }
                 },
                 Options = new ChartOptions
                 {
                     Responsive = true,
-                    MaintainAspectRatio = false, // Корректно передаем параметр
-                    Title = new ChartTitle
+                    MaintainAspectRatio = false,
+                    Plugins = new ChartPlugins
                     {
-                        Display = true,
-                        Text = "Общее количество пользователей"
+                        Legend = new ChartLegend
+                        {
+                            Display = true,
+                            Position = "top"
+                        }
+                    },
+                    Scales = new ChartScales
+                    {
+                        Y = new ChartScale
+                        {
+                            BeginAtZero = true,
+                            GridLines = new ChartGridLines
+                            {
+                                Color = "#f0f0f0"
+                            }
+                        },
+                        X = new ChartScale
+                        {
+                            GridLines = new ChartGridLines
+                            {
+                                Color = "#f0f0f0"
+                            }
+                        }
                     }
                 }
             };
 
-        // Настройка графика распределения ролей
+        // График распределения ролей
         _roleDistributionChartConfig = new ChartConfiguration
             {
-                Type = "pie",
+                Type = "doughnut",
                 Data = new ChartData
                 {
                     Labels = new List<string> { "Преподаватели", "Студенты" },
@@ -73,20 +159,170 @@
                     new ChartDataset
                     {
                         Data = new List<double> { teacherCount, studentCount },
-                        BackgroundColor = new List<string> { "#ff6b6b", "#4caf50" }
+                        BackgroundColor = new List<string> { "#ff6b6b", "#43a047" },
+                        BorderColor = "#ffffff",
+                        BorderWidth = 3
                     }
                 }
                 },
                 Options = new ChartOptions
                 {
                     Responsive = true,
-                    MaintainAspectRatio = false, // Корректно передаем параметр
-                    Title = new ChartTitle
+                    MaintainAspectRatio = false,
+                    Cutout = "70%",
+                    Plugins = new ChartPlugins
                     {
-                        Display = true,
-                        Text = "Распределение ролей пользователей"
+                        Legend = new ChartLegend
+                        {
+                            Display = true,
+                            Position = "right"
+                        },
+                        Tooltip = new ChartTooltip
+                        {
+                            Enabled = true,
+                            Callbacks = new ChartTooltipCallbacks
+                            {
+                                Label = "(tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} (${Math.round(tooltipItem.raw / " +
+                                        $"{teacherCount + studentCount} * 100)%)`"
+                            }
+                        }
                     }
                 }
             };
+    }
+
+    private async Task LoadTeacherAnalytics(int teacherId)
+    {
+        // Получаем курсы, которые ведет преподаватель
+        var teacherCourses = await DbContext.Users_Courses
+            .Where(uc => uc.ID_User == teacherId && uc.Author)
+            .Select(uc => uc.ID_CourseNavigation)
+            .ToListAsync();
+
+        // Подсчитываем количество студентов на каждом курсе
+        var courseStudentCounts = new Dictionary<string, int>();
+        foreach (var course in teacherCourses)
+        {
+            var studentCount = await DbContext.Users_Courses
+                .CountAsync(uc => uc.ID_Course == course.ID_Course && !uc.Author);
+
+            courseStudentCounts[course.Name] = studentCount;
+        }
+
+        // График "Мои курсы и студенты"
+        _courseStudentChartConfig = new ChartConfiguration
+            {
+                Type = "bar",
+                Data = new ChartData
+                {
+                    Labels = courseStudentCounts.Keys.ToList(),
+                    Datasets = new List<ChartDataset>
+                {
+                    new ChartDataset
+                    {
+                        Label = "Количество студентов",
+                        Data = courseStudentCounts.Values.Select(v => (double)v).ToList(),
+                        BackgroundColor = "#63b3ed",
+                        BorderColor = "#4a90e2",
+                        BorderWidth = 2
+                    }
+                }
+                },
+                Options = new ChartOptions
+                {
+                    Responsive = true,
+                    MaintainAspectRatio = false,
+                    Plugins = new ChartPlugins
+                    {
+                        Legend = new ChartLegend
+                        {
+                            Display = true,
+                            Position = "top"
+                        }
+                    },
+                    Scales = new ChartScales
+                    {
+                        Y = new ChartScale
+                        {
+                            BeginAtZero = true,
+                            GridLines = new ChartGridLines
+                            {
+                                Color = "#f0f0f0"
+                            }
+                        },
+                        X = new ChartScale
+                        {
+                            GridLines = new ChartGridLines
+                            {
+                                Color = "#f0f0f0"
+                            }
+                        }
+                    }
+                }
+            };
+
+        // График "Распределение студентов по курсам"
+        _studentDistributionChartConfig = new ChartConfiguration
+            {
+                Type = "doughnut",
+                Data = new ChartData
+                {
+                    Labels = courseStudentCounts.Keys.ToList(),
+                    Datasets = new List<ChartDataset>
+                {
+                    new ChartDataset
+                    {
+                        Data = courseStudentCounts.Values.Select(v => (double)v).ToList(),
+                        BackgroundColor = new List<string> { "#ff6b6b", "#43a047", "#ffca28", "#ab47bc", "#00acc1" },
+                        BorderColor = "#ffffff",
+                        BorderWidth = 3
+                    }
+                }
+                },
+                Options = new ChartOptions
+                {
+                    Responsive = true,
+                    MaintainAspectRatio = false,
+                    Cutout = "70%",
+                    Plugins = new ChartPlugins
+                    {
+                        Legend = new ChartLegend
+                        {
+                            Display = true,
+                            Position = "right"
+                        },
+                        Tooltip = new ChartTooltip
+                        {
+                            Enabled = true,
+                            Callbacks = new ChartTooltipCallbacks
+                            {
+                                Label = "(tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw} (${Math.round(tooltipItem.raw / " +
+                                        $"{courseStudentCounts.Values.Sum()} * 100)%)`"
+                            }
+                        }
+                    }
+                }
+            };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (IsAdmin)
+            {
+                await Task.WhenAll(
+                    _userCountChart?.Refresh(),
+                    _roleDistributionChart?.Refresh()
+                );
+            }
+            else if (IsTeacher)
+            {
+                await Task.WhenAll(
+                    _courseStudentChart?.Refresh(),
+                    _studentDistributionChart?.Refresh()
+                );
+            }
+        }
     }
 }

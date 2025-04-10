@@ -111,6 +111,17 @@
                     Открыть панель преподавателя
                 </button>
             </div>
+
+            <!-- Плашка аналитики -->
+            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+                <h2 class="text-lg font-bold">Аналитика</h2>
+                <p class="text-sm text-gray-600">Просмотр статистики и аналитики по порталу.</p>
+                <button type="button" @onclick="NavigateToAnalytics"
+                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        style="background-color: rgb(178, 146, 215);">
+                    Открыть аналитику
+                </button>
+            </div>
         }
 
         <!-- Плашка удаления профиля -->
@@ -124,16 +135,39 @@
             </button>
         </div>
 
-        <!-- Плашка окна администратора -->
+        <!-- Плашки администратора -->
         @if (IsAdmin)
         {
+            <!-- Плашка управления пользователями -->
             <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
-                <h2 class="text-lg font-bold">Окно администратора</h2>
-                <p class="text-sm text-gray-600">Просмотр и управление пользователями.</p>
+                <h2 class="text-lg font-bold">Управление пользователями</h2>
+                <p class="text-sm text-gray-600">Просмотр и управление пользователями портала.</p>
                 <button type="button" @onclick="NavigateToAdminPanel"
                         class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         style="background-color: rgb(178, 146, 215);">
-                    Открыть окно администратора
+                    Открыть управление пользователями
+                </button>
+            </div>
+
+            <!-- Плашка управления курсами -->
+            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+                <h2 class="text-lg font-bold">Управление курсами</h2>
+                <p class="text-sm text-gray-600">Просмотр и управление курсами портала.</p>
+                <button type="button" @onclick="NavigateToCourseManagement"
+                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        style="background-color: rgb(178, 146, 215);">
+                    Открыть управление курсами
+                </button>
+            </div>
+
+            <!-- Плашка аналитики -->
+            <div class="mt-10 bg-white rounded-lg shadow-md p-6" style="width: 100%;">
+                <h2 class="text-lg font-bold">Аналитика</h2>
+                <p class="text-sm text-gray-600">Просмотр статистики и аналитики по порталу.</p>
+                <button type="button" @onclick="NavigateToAnalytics"
+                        class="mt-4 text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        style="background-color: rgb(178, 146, 215);">
+                    Открыть аналитику
                 </button>
             </div>
         }
@@ -168,7 +202,6 @@
     private string SurnameError, NameError, MiddleNameError, BirthdayError, PhoneNumberError;
     private bool IsDeleteDialogOpen = false;
     private bool IsAdmin { get; set; }
-
     private bool IsTeacher { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -196,64 +229,6 @@
                 Sex = OriginalUser.Sex
             };
     }
-    private void EnableEditing()
-    {
-        IsReadOnly = false;
-    }
-
-    private async Task SaveChanges()
-    {
-        ValidateAll();
-        if (!string.IsNullOrWhiteSpace(SurnameError) ||
-            !string.IsNullOrWhiteSpace(NameError) ||
-            !string.IsNullOrWhiteSpace(BirthdayError) ||
-            !string.IsNullOrWhiteSpace(PhoneNumberError))
-        {
-            return;
-        }
-        var userToUpdate = await DbContext.Users.FindAsync(EditableUser.ID_User);
-        if (userToUpdate != null)
-        {
-            userToUpdate.Surname = EditableUser.Surname;
-            userToUpdate.Name = EditableUser.Name;
-            userToUpdate.MiddleName = EditableUser.MiddleName;
-            userToUpdate.Birthday = EditableUser.Birthday;
-            userToUpdate.PhoneNumber = EditableUser.PhoneNumber;
-            userToUpdate.Sex = EditableUser.Sex;
-            await DbContext.SaveChangesAsync();
-            OriginalUser = new User
-                {
-                    ID_User = userToUpdate.ID_User,
-                    Surname = userToUpdate.Surname,
-                    Name = userToUpdate.Name,
-                    MiddleName = userToUpdate.MiddleName,
-                    Birthday = userToUpdate.Birthday,
-                    PhoneNumber = userToUpdate.PhoneNumber,
-                    Sex = userToUpdate.Sex
-                };
-            IsReadOnly = true;
-        }
-    }
-
-    private void CancelChanges()
-    {
-        IsReadOnly = true;
-        EditableUser = new User
-            {
-                ID_User = OriginalUser.ID_User,
-                Surname = OriginalUser.Surname,
-                Name = OriginalUser.Name,
-                MiddleName = OriginalUser.MiddleName,
-                Birthday = OriginalUser.Birthday,
-                PhoneNumber = OriginalUser.PhoneNumber,
-                Sex = OriginalUser.Sex
-            };
-        SurnameError = null;
-        NameError = null;
-        MiddleNameError = null;
-        BirthdayError = null;
-        PhoneNumberError = null;
-    }
 
     private void NavigateToProgress()
     {
@@ -270,8 +245,41 @@
         NavigationManager.NavigateTo("/admin-panel");
     }
 
+    private void NavigateToCourseManagement()
+    {
+        NavigationManager.NavigateTo("/course-management");
+    }
+
+    private void NavigateToAnalytics()
+    {
+        NavigationManager.NavigateTo("/analytics");
+    }
+
     private async Task DeleteProfile()
     {
+        var userToDelete = await DbContext.Users.FindAsync(OriginalUser.ID_User);
+        if (userToDelete != null)
+        {
+            DbContext.Users.Remove(userToDelete);
+            await DbContext.SaveChangesAsync();
+            CurrentUserService.Logout();
+            NavigationManager.NavigateTo("/authorization");
+        }
+    }
+
+    private void ShowDeleteConfirmation()
+    {
+        IsDeleteDialogOpen = true;
+    }
+
+    private void CancelDelete()
+    {
+        IsDeleteDialogOpen = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        IsDeleteDialogOpen = false;
         var userToDelete = await DbContext.Users.FindAsync(OriginalUser.ID_User);
         if (userToDelete != null)
         {
@@ -360,26 +368,67 @@
         }
     }
 
-    private void ShowDeleteConfirmation()
+    private void EnableEditing()
     {
-        IsDeleteDialogOpen = true;
+        IsReadOnly = false;
     }
 
-    private void CancelDelete()
+    private async Task SaveChanges()
     {
-        IsDeleteDialogOpen = false;
-    }
-
-    private async Task ConfirmDelete()
-    {
-        IsDeleteDialogOpen = false;
-        var userToDelete = await DbContext.Users.FindAsync(OriginalUser.ID_User);
-        if (userToDelete != null)
+        ValidateAll();
+        if (!string.IsNullOrWhiteSpace(SurnameError) ||
+            !string.IsNullOrWhiteSpace(NameError) ||
+            !string.IsNullOrWhiteSpace(BirthdayError) ||
+            !string.IsNullOrWhiteSpace(PhoneNumberError))
         {
-            DbContext.Users.Remove(userToDelete);
-            await DbContext.SaveChangesAsync();
-            CurrentUserService.Logout();
-            NavigationManager.NavigateTo("/authorization");
+            return;
         }
+
+        var userToUpdate = await DbContext.Users.FindAsync(EditableUser.ID_User);
+        if (userToUpdate != null)
+        {
+            userToUpdate.Surname = EditableUser.Surname;
+            userToUpdate.Name = EditableUser.Name;
+            userToUpdate.MiddleName = EditableUser.MiddleName;
+            userToUpdate.Birthday = EditableUser.Birthday;
+            userToUpdate.PhoneNumber = EditableUser.PhoneNumber;
+            userToUpdate.Sex = EditableUser.Sex;
+
+            await DbContext.SaveChangesAsync();
+
+            OriginalUser = new User
+                {
+                    ID_User = userToUpdate.ID_User,
+                    Surname = userToUpdate.Surname,
+                    Name = userToUpdate.Name,
+                    MiddleName = userToUpdate.MiddleName,
+                    Birthday = userToUpdate.Birthday,
+                    PhoneNumber = userToUpdate.PhoneNumber,
+                    Sex = userToUpdate.Sex
+                };
+
+            IsReadOnly = true;
+        }
+    }
+
+    private void CancelChanges()
+    {
+        IsReadOnly = true;
+        EditableUser = new User
+            {
+                ID_User = OriginalUser.ID_User,
+                Surname = OriginalUser.Surname,
+                Name = OriginalUser.Name,   
+                MiddleName = OriginalUser.MiddleName,
+                Birthday = OriginalUser.Birthday,
+                PhoneNumber = OriginalUser.PhoneNumber,
+                Sex = OriginalUser.Sex
+            };
+
+        SurnameError = null;
+        NameError = null;
+        MiddleNameError = null;
+        BirthdayError = null;
+        PhoneNumberError = null;
     }
 }
