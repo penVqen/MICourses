@@ -4,6 +4,13 @@
 @inject CurrentUserService CurrentUserService
 
 <div class="container relative" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 50px; min-height: 100vh;">
+
+    <button @onclick="NavigateToTeacherPanel"
+            class="absolute text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 mr-2"
+            style="top: 20px; right: 80px; background-color: rgb(178, 146, 215);">
+        Назад к панели преподавателя
+    </button>
+
     <button @onclick="NavigateToEducation"
             class="absolute text-gray-500 hover:text-gray-700 text-xl"
             style="top: 20px; right: 20px; font-size: 60px;">
@@ -56,9 +63,16 @@
         </div>
     </div>
 
-    <button @onclick="SaveChanges" class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
-        Сохранить изменения
-    </button>
+    <div class="flex gap-4">
+        <button @onclick="SaveChanges"
+                class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
+            Сохранить изменения
+        </button>
+        <button @onclick="SaveChangesAndNavigateToTeacherPanel"
+                class="bg-purple-500 text-white px-6 py-2 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
+            Сохранить изменения и перейти в панель преподавателя
+        </button>
+    </div>
 </div>
 
 @if (IsModalOpen)
@@ -167,9 +181,65 @@
         NavigationManager.NavigateTo("/education");
     }
 
+    private async Task SaveChangesAndNavigateToTeacherPanel()
+    {
+        // Выполняем сохранение изменений
+        if (string.IsNullOrWhiteSpace(CourseName))
+        {
+            ModalMessage = "Вы не ввели название курса.";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CourseDescription))
+        {
+            ModalMessage = "Вы не ввели описание курса.";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (StudyPeriod < 5)
+        {
+            ModalMessage = "Период обучения не может быть меньше 5 недель.";
+            IsModalOpen = true;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(SelectedLanguage))
+        {
+            ModalMessage = "Вы не выбрали язык курса.";
+            IsModalOpen = true;
+            return;
+        }
+
+        var course = await DbContext.Courses.FindAsync(CourseId);
+
+        if (course == null)
+        {
+            ModalMessage = "Курс не найден.";
+            IsModalOpen = true;
+            return;
+        }
+
+        course.Name = CourseName;
+        course.Description = CourseDescription;
+        course.StudyPeriod = StudyPeriod + " недель";
+        course.Language = SelectedLanguage;
+        course.ForBeginners = ForBeginners;
+
+        await DbContext.SaveChangesAsync();
+
+        // Перенаправляем на панель преподавателя
+        NavigationManager.NavigateTo("/teacher-panel");
+    }
+
     void NavigateToEducation()
     {
         NavigationManager.NavigateTo("/education");
     }
+
+    void NavigateToTeacherPanel()
+    {
+        NavigationManager.NavigateTo("/teacher-panel");
+    }
 }
-z

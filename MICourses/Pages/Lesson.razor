@@ -4,11 +4,23 @@
 @inject NavigationManager NavigationManager
 
 <div class="container relative" style="max-width: calc(100% - 800px); margin: auto; padding: 20px; margin-top: 50px; min-height: 100vh;">
-    <button @onclick="NavigateToEducation"
-            class="absolute text-gray-500 hover:text-gray-700 text-xl"
-            style="top: 20px; right: 20px; font-size: 60px;">
-        &times;
-    </button>
+    <!-- Кнопка "Назад" -->
+    <div class="absolute top-5 right-5 flex items-center space-x-4">
+        @if (IsTeacher)
+        {
+            <button @onclick="NavigateBack"
+                    class="text-white px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    style="background-color: rgb(178, 146, 215);">
+                Назад к панели преподавателя
+            </button>
+        }
+
+        <!-- Кнопка закрытия -->
+        <button @onclick="NavigateToEducation"
+                class="text-gray-500 hover:text-gray-700 text-3xl focus:outline-none">
+            &times;
+        </button>
+    </div>
 
     <h2 class="text-lg font-semibold text-gray-800" style="font-size: 50px; margin-bottom: 40px;">
         Урок: @CurrentLesson?.ID_LessonNavigation.Name
@@ -39,12 +51,18 @@
     [Parameter] public int lessonId { get; set; }
     private Users_Lesson CurrentLesson;
 
+    // Флаг для определения роли пользователя
+    private bool IsTeacher { get; set; } = false;
+
     protected override async Task OnParametersSetAsync()
     {
         var currentUser = CurrentUserService.GetCurrentUser();
 
         if (currentUser != null)
         {
+            // Проверяем роль пользователя
+            IsTeacher = currentUser.Role == "Teacher";
+
             CurrentLesson = await DbContext.Users_Lessons
                 .Include(l => l.ID_LessonNavigation)
                 .FirstOrDefaultAsync(l => l.ID_Lesson == lessonId && l.ID_User == currentUser.ID_User);
@@ -54,6 +72,11 @@
     private void NavigateToEducation()
     {
         NavigationManager.NavigateTo("/education");
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/teacher-panel");
     }
 
     private async Task MarkLessonAsRead()
@@ -78,5 +101,4 @@
             NavigateToEducation();
         }
     }
-
 }
