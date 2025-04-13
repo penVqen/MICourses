@@ -35,5 +35,66 @@
     <script src="_framework/blazor.server.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/Diagram.js"></script>
+
+    <script>
+        function downloadFileFromStream(fileName, fileData) {
+            var blob = new Blob([fileData], { type: 'application/octet-stream' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        }
+
+        window.saveAsFile = function (filename, data) {
+            const link = document.createElement('a');
+            link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${data}`;
+            link.download = filename;
+            link.click();
+        };
+
+        // Новая функция для сохранения файла с выбором директории
+        window.saveAsFileWithDirectory = async function (dotNetHelper, fileName, content) {
+            const byteCharacters = atob(content);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+
+            // Создаем Blob
+            const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+            // Проверяем поддержку showSaveFilePicker
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{
+                            description: 'Excel Files',
+                            accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+
+                    // Уведомляем Blazor о завершении
+                    dotNetHelper.invokeMethodAsync('OnFileSaved', handle.name);
+                } catch (err) {
+                    console.error('Error saving file:', err);
+                    alert('Ошибка при сохранении файла. Попробуйте другой метод.');
+                }
+            } else {
+                // Если браузер не поддерживает showSaveFilePicker, используем старый метод
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(link.href);
+
+                // Уведомляем Blazor о завершении
+                dotNetHelper.invokeMethodAsync('OnFileSaved', fileName);
+            }
+        };</script>
 </body>
 </html>
