@@ -1,7 +1,6 @@
 ﻿@inject CurrentUserService CurrentUserService
 @inject NavigationManager NavigationManager
 
-
 <link href="css/site.css" rel="stylesheet">
 
 <nav class="navbar">
@@ -12,19 +11,25 @@
     <div class="navbar-buttons">
         <a href="/" class="catalog-button">Каталог</a>
         <a href="/education" class="training-button">Мое обучение</a>
+
+        <!-- Добавленная кнопка чата -->
+        @if (CurrentUserService.IsAuthenticated() &&
+        (CurrentUserService.GetCurrentUser().Role == "User" ||
+        CurrentUserService.GetCurrentUser().Role == "Teacher"))
+        {
+            <a href="/chat" class="chat-button">Чат</a>
+        }
     </div>
 
     <div class="dropdown">
-            <span class="login-text">@CurrentUserService.GetCurrentUser()?.Login</span>
-            <button class="dropdown-arrow">&#9662;</button>
-            <div class="dropdown-menu">
-                <a href="/profile">Профиль</a>
-                <a @onclick="Logout">Выход</a>
-            </div>
+        <span class="login-text">@CurrentUserService.GetCurrentUser()?.Login</span>
+        <button class="dropdown-arrow">&#9662;</button>
+        <div class="dropdown-menu">
+            <a href="/profile">Профиль</a>
+            <a @onclick="Logout">Выход</a>
+        </div>
     </div>
 </nav>
-
-
 
 @code {
     private void Logout()

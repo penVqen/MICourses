@@ -45,9 +45,12 @@ public partial class MIContext : DbContext
 
     public virtual DbSet<Users_Test> Users_Tests { get; set; }
 
+    public virtual DbSet<Chat> Chats { get; set; }
+    public virtual DbSet<Message> Messages { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=DESKTOP-0K68CC6\\SQLEXPRESS;Database=testiruyu;TrustServerCertificate=True;Integrated Security=True");
+        => optionsBuilder.UseSqlServer("Data Source=DESKTOP-O3BF1F7\\SQLEXPRESS;Database=testiruyu;TrustServerCertificate=True;Integrated Security=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,6 +109,36 @@ public partial class MIContext : DbContext
             entity.HasOne(d => d.ID_UserNavigation).WithMany(p => p.Users_Achievments)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Users_Achievments_Users");
+        });
+
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(m => m.MessageID);
+            entity.HasOne(m => m.Chat)
+                  .WithMany(c => c.Messages)
+                  .HasForeignKey(m => m.ChatID)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(m => m.User)
+                  .WithMany()
+                  .HasForeignKey(m => m.UserID)
+                  .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<Chat>(entity =>
+        {
+            entity.HasKey(c => c.ChatID);
+            entity.HasOne(c => c.Student)
+                  .WithMany()
+                  .HasForeignKey(c => c.StudentID)
+                  .OnDelete(DeleteBehavior.NoAction); // Запрет каскадного удаления
+            entity.HasOne(c => c.Teacher)
+                  .WithMany()
+                  .HasForeignKey(c => c.TeacherID)
+                  .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(c => c.Course)
+                  .WithMany()
+                  .HasForeignKey(c => c.CourseID)
+                  .OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<Users_Comment>(entity =>

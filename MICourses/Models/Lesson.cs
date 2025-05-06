@@ -28,6 +28,8 @@ public partial class Lesson
     [Required]
     public string Text { get; set; }
 
+    public string PdfPath { get; set; }
+
     [InverseProperty("ID_LessonNavigation")]
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 

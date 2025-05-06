@@ -127,7 +127,46 @@
         DbContext.Users_Lessons.AddRange(userLessons);
         await DbContext.SaveChangesAsync();
 
+        // Генерация PDF
+        await GeneratePdf(newLessonId, LessonText);
+
         NavigationManager.NavigateTo("/education");
+    }
+    private async Task GeneratePdf(int lessonId, string lessonText)
+    {
+        string filePath = Path.Combine("wwwroot", "pdfs", $"lesson_{lessonId}.pdf");
+        string directoryPath = Path.GetDirectoryName(filePath);
+
+        try
+        {
+            // Создайте папку, если её нет
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            // Простая генерация PDF без форматирования
+            using (var writer = new iText.Kernel.Pdf.PdfWriter(filePath))
+            using (var pdf = new iText.Kernel.Pdf.PdfDocument(writer))
+            using (var document = new iText.Layout.Document(pdf))
+            {
+                document.Add(new iText.Layout.Element.Paragraph(lessonText));
+            }
+
+            // Обновите путь к PDF в БД
+            var lesson = await DbContext.Lessons.FindAsync(lessonId);
+            if (lesson != null)
+            {
+                lesson.PdfPath = $"/pdfs/lesson_{lessonId}.pdf";
+                await DbContext.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            ModalMessage = "Ошибка при генерации PDF";
+            IsModalOpen = true;
+        }
     }
 
 

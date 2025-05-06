@@ -1,0 +1,185 @@
+﻿@page "/chat"
+@inject MIContext Db
+@inject CurrentUserService CurrentUserService
+@inject NavigationManager NavManager
+
+<style>
+    .chat-container {
+        display: flex;
+        height: 80vh;
+        margin: 20px;
+    }
+
+    .chat-list {
+        width: 30%;
+        border-right: 1px solid #ccc;
+        padding-right: 10px;
+    }
+
+    .chat-window {
+        width: 70%;
+        padding-left: 10px;
+    }
+
+    .message {
+        margin: 5px 0;
+        padding: 8px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="chat-container">
+    <!-- Список чатов -->
+    <div class="chat-list">
+        <h3>Чаты</h3>
+        @if (chats.Any())
+        {
+            @foreach (var chat in chats)
+            {
+                <div @onclick="() => SelectChat(chat)">
+                    <strong>@GetParticipantName(chat)</strong> - @chat.Course.Name
+                </div>
+            }
+        }
+        else
+        {
+            <p>Нет активных чатов</p>
+        }
+    </div>
+
+    <!-- Окно чата -->
+    <div class="chat-window">
+        @if (selectedChat != null)
+        {
+            <div style="height: 70%; overflow-y: auto;">
+                @foreach (var msg in selectedChat.Messages.OrderBy(m => m.Timestamp))
+                {
+                    <div class="message">
+                        <strong>@msg.User.Login</strong>: @msg.Content
+                        <small>@msg.Timestamp.ToString("HH:mm")</small>
+                    </div>
+                }
+            </div>
+            <input @bind-value="newMessage" placeholder="Введите сообщение..." />
+            <button @onclick="SendMessage">Отправить</button>
+        }
+        else
+        {
+            <p>Выберите чат</p>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Chat> chats = new();
+    private Chat selectedChat;
+    private string newMessage = "";
+    private User currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = CurrentUserService.GetCurrentUser();
+        if (currentUser == null) NavManager.NavigateTo("/authorization");
+
+        chats = new List<Chat>();
+
+        if (currentUser.Role == "User") // Студент
+        {
+            var studentCourses = await Db.Users_Courses
+                .Where(uc => uc.ID_User == currentUser.ID_User && !uc.Author)
+                .Include(uc => uc.ID_CourseNavigation)
+                .ToListAsync();
+
+            var teacherIds = new List<int>();
+            foreach (var course in studentCourses)
+            {
+                var teacher = await Db.Users_Courses
+                    .Where(uc => uc.ID_Course == course.ID_Course && uc.Author)
+                    .Select(uc => uc.ID_User)
+                    .FirstOrDefaultAsync();
+
+                if (teacher != 0)
+                    teacherIds.Add(teacher);
+            }
+
+            if (teacherIds.Any())
+            {
+                chats = await Db.Chats
+                    .Include(c => c.Student)
+                    .Include(c => c.Teacher)
+                    .Include(c => c.Course)
+                    .Include(c => c.Messages)
+                    .ThenInclude(m => m.User)
+                    .Where(c =>
+                        c.StudentID == currentUser.ID_User &&
+                        teacherIds.Contains(c.TeacherID))
+                    .ToListAsync();
+            }
+        }
+        else if (currentUser.Role == "Teacher") // Преподаватель
+        {
+            var teacherCourses = await Db.Users_Courses
+                .Where(uc => uc.ID_User == currentUser.ID_User && uc.Author)
+                .Include(uc => uc.ID_CourseNavigation)
+                .ToListAsync();
+
+            var studentIds = new List<int>();
+            foreach (var course in teacherCourses)
+            {
+                var students = await Db.Users_Courses
+                    .Where(uc => uc.ID_Course == course.ID_Course && !uc.Author)
+                    .Select(uc => uc.ID_User)
+                    .ToListAsync();
+
+                studentIds.AddRange(students);
+            }
+
+            if (studentIds.Any())
+            {
+                chats = await Db.Chats
+                    .Include(c => c.Student)
+                    .Include(c => c.Teacher)
+                    .Include(c => c.Course)
+                    .Include(c => c.Messages)
+                    .ThenInclude(m => m.User)
+                    .Where(c =>
+                        c.TeacherID == currentUser.ID_User &&
+                        studentIds.Contains(c.StudentID))
+                    .ToListAsync();
+            }
+        }
+    }
+
+    private string GetParticipantName(Chat chat)
+    {
+        if (currentUser.Role == "User") // Студент
+            return chat.Teacher.Login;
+        else // Преподаватель
+            return chat.Student.Login;
+    }
+
+    private void SelectChat(Chat chat)
+    {
+        selectedChat = chat;
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(newMessage)) return;
+
+        var message = new Message
+            {
+                ChatID = selectedChat.ChatID,
+                UserID = currentUser.ID_User,
+                Content = newMessage,
+                Timestamp = DateTime.Now
+            };
+
+        Db.Messages.Add(message);
+        await Db.SaveChangesAsync();
+
+        newMessage = "";
+        StateHasChanged(); // Обновляем интерфейс
+    }
+}

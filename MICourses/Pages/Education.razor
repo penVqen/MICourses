@@ -154,6 +154,16 @@
                                                     style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
                                                 Перейти
                                             </button>
+
+                                        <!-- Кнопка "Скачать PDF" -->
+                                        @if (!string.IsNullOrEmpty(userLesson.ID_LessonNavigation.PdfPath))
+                                        {
+                                            <a href="@userLesson.ID_LessonNavigation.PdfPath" download
+                                               class="custom-button-hover"
+                                               style="background: #D1C4E9; border: none; border-radius: 20px; padding: 5px 15px; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; color: white;">
+                                                Скачать PDF
+                                            </a>
+                                        }
                                             @if (MyCoursesSelected && UserRole == "Teacher" && SelectedCourse.Author)
                                             {
                                                 <button @onclick="() => EditLesson(userLesson.ID_LessonNavigation.ID_Lesson)"
